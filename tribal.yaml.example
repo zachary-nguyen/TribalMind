@@ -1,0 +1,36 @@
+# TribalMind Configuration
+# Copy to tribal.yaml in your project root and customize.
+# Values here are overridden by TRIBAL_* environment variables.
+
+# Backboard API settings
+# backboard_base_url: "https://app.backboard.io/api"
+# API key should be set via: tribal config set-secret backboard-api-key
+
+# LLM provider and model (via Backboard's multi-provider catalog)
+llm_provider: "anthropic"
+model_name: "claude-sonnet-4-20250514"
+
+# Embedding model (permanent per Backboard assistant - choose carefully)
+embedding_provider: "openai"
+embedding_model: "text-embedding-3-small"
+embedding_dims: 1536
+
+# Daemon settings
+daemon_host: "127.0.0.1"
+daemon_port: 7483
+
+# Team sharing (enable with: tribal enable-team-sharing)
+team_sharing_enabled: false
+# org_assistant_id: "your-org-assistant-id"
+
+# Commands to ignore (won't trigger error analysis)
+ignore_commands:
+  - cd
+  - ls
+  - pwd
+  - clear
+  - cls
+  - echo
+  - cat
+  - less
+  - more

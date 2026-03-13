@@ -1,0 +1,57 @@
+"""TribalMind CLI - root Typer application."""
+
+from __future__ import annotations
+
+import typer
+
+from tribalmind import __version__
+
+app = typer.Typer(
+    name="tribal",
+    help="TribalMind - Federated Developer Knowledge Agent",
+    no_args_is_help=True,
+)
+
+
+def version_callback(value: bool) -> None:
+    if value:
+        typer.echo(f"tribal {__version__}")
+        raise typer.Exit()
+
+
+@app.callback()
+def main(
+    version: bool = typer.Option(
+        False, "--version", "-v", help="Show version and exit.", callback=version_callback,
+        is_eager=True,
+    ),
+) -> None:
+    """TribalMind - Federated Developer Knowledge Agent.
+
+    Observes terminal activity, correlates errors with upstream library health,
+    and shares validated fixes across your team.
+    """
+
+
+# Register subcommands
+from tribalmind.cli.config_cmd import config_app  # noqa: E402
+
+app.add_typer(config_app, name="config", help="Manage TribalMind configuration.")
+
+from tribalmind.cli.daemon_cmd import start, status, stop  # noqa: E402
+
+app.command()(start)
+app.command()(stop)
+app.command()(status)
+
+from tribalmind.cli.install import install  # noqa: E402
+
+app.command()(install)
+
+from tribalmind.cli.team import enable_team_sharing  # noqa: E402
+
+app.command(name="enable-team-sharing")(enable_team_sharing)
+
+
+if __name__ == "__main__":
+    app()
