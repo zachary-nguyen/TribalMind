@@ -51,6 +51,24 @@ artifacts = ["lib/tribalmind/web/static"]
 testpaths = ["tests"]
 asyncio_mode = "auto"
 
+[tool.semantic_release]
+version_toml = ["pyproject.toml:project.version"]
+tag_format = "v{version}"
+commit_message = "chore: release v{version} [skip ci]"
+changelog_file = "CHANGELOG.md"
+major_on_zero = false   # breaking changes on 0.x won't bump to 1.0 automatically
+
+[tool.semantic_release.commit_parser_options]
+# Commit types that trigger a release:
+#   fix: ...        → patch  (0.1.0 → 0.1.1)
+#   feat: ...       → minor  (0.1.0 → 0.2.0)
+#   feat!: ...      → major  (0.1.0 → 1.0.0)
+#   BREAKING CHANGE: in body → major
+# No release: chore:, docs:, style:, refactor:, test:, ci:
+allowed_tags = ["feat", "fix", "perf", "refactor"]
+minor_tags = ["feat"]
+patch_tags = ["fix", "perf"]
+
 [tool.ruff]
 target-version = "py311"
 line-length = 100

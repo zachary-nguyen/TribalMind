@@ -2,86 +2,90 @@ name: Release
 
 on:
   push:
-    tags:
-      - "v*.*.*"   # triggers on v0.2.0, v1.0.0, etc.
+    branches: [master]
+
+# Prevent concurrent releases
+concurrency:
+  group: release
+  cancel-in-progress: false
 
 jobs:
-  # Run full CI suite before publishing
-  ci:
-    name: CI checks
-    uses: ./.github/workflows/ci.yml
-
-  build:
-    name: Build wheel
-    needs: ci
+  release:
+    name: Version, build & publish
     runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      contents: write   # push version bump commit + tag
+      id-token: write   # PyPI trusted publishing (OIDC)
 
     steps:
       - uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          fetch-depth: 0   # PSR needs full history to read all commits
 
-      - name: Set up pnpm
-        uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v4
         with:
           version: latest
 
-      - name: Set up Node
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: "20"
           cache: pnpm
           cache-dependency-path: ui/pnpm-lock.yaml
 
-      - name: Verify tag matches package version
-        run: |
-          TAG="${GITHUB_REF_NAME#v}"
-          PKG=$(python -c "import tomllib; d=tomllib.load(open('pyproject.toml','rb')); print(d['project']['version'])")
-          if [ "$TAG" != "$PKG" ]; then
-            echo "Tag $TAG does not match pyproject.toml version $PKG"
-            exit 1
-          fi
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
 
-      - name: Install hatch
-        run: pip install hatch
+      - name: Install tools
+        run: pip install python-semantic-release hatch
+
+      - name: Configure git
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      # Check if any commits since last tag warrant a release.
+      # Outputs next version (e.g. "0.2.0") or empty string if nothing to release.
+      - name: Determine next version
+        id: next
+        run: |
+          NEXT=$(semantic-release version --print 2>/dev/null || echo "")
+          echo "version=$NEXT" >> $GITHUB_OUTPUT
+          echo "Next version: ${NEXT:-'(none — skipping release)'}"
+
+      # Update pyproject.toml + CHANGELOG.md but don't commit/tag yet
+      - name: Bump version files
+        if: steps.next.outputs.version != ''
+        run: semantic-release version --no-commit --no-tag --no-push --no-vcs-release
+
+      - name: Build frontend
+        if: steps.next.outputs.version != ''
+        working-directory: ui
+        run: pnpm install --frozen-lockfile && pnpm build
 
       - name: Build wheel + sdist
-        # hatch_build.py hook runs here automatically:
-        #   pnpm install --frozen-lockfile
-        #   pnpm build  →  src/tribalmind/web/static/
-        #   static files bundled into the wheel
+        if: steps.next.outputs.version != ''
+        # hatch_build.py bundled the frontend into the wheel at this point
         run: hatch build
 
-      - name: Upload dist artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: dist
-          path: dist/
-
-  publish:
-    name: Publish to PyPI
-    needs: build
-    runs-on: ubuntu-latest
-    environment: pypi
-    permissions:
-      id-token: write   # required for PyPI trusted publishing (no API token needed)
-      contents: write   # required for creating the GitHub release
-
-    steps:
-      - name: Download dist artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: dist
-          path: dist/
-
       - name: Publish to PyPI
+        if: steps.next.outputs.version != ''
         uses: pypa/gh-action-pypi-publish@release/v1
 
+      # Commit, tag, and push — after a successful publish
+      - name: Commit and tag release
+        if: steps.next.outputs.version != ''
+        run: |
+          git add pyproject.toml CHANGELOG.md
+          git commit -m "chore: release v${{ steps.next.outputs.version }} [skip ci]"
+          git tag "v${{ steps.next.outputs.version }}"
+          git push origin master "v${{ steps.next.outputs.version }}"
+
       - name: Create GitHub release
+        if: steps.next.outputs.version != ''
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: v${{ steps.next.outputs.version }}
           files: dist/*
           generate_release_notes: true
