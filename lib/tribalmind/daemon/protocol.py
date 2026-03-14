@@ -66,3 +66,7 @@ class DaemonMessage:
     @classmethod
     def config_reload(cls) -> DaemonMessage:
         return cls(type="config_reload")
+
+    @classmethod
+    def insight_response(cls, text: str = "") -> DaemonMessage:
+        return cls(type="insight_response", payload={"text": text})

@@ -12,6 +12,7 @@ from rich.table import Table
 from tribalmind.config.credentials import (
     BACKBOARD_API_KEY,
     GITHUB_TOKEN,
+    get_credential,
     set_credential,
 )
 from tribalmind.config.settings import TribalSettings, clear_settings_cache
@@ -116,6 +117,10 @@ def config_list() -> None:
 @config_app.command("set-secret")
 def config_set_secret(
     name: str = typer.Argument(help="Secret name: backboard-api-key or github-token"),
+    value: str | None = typer.Option(
+        None, "--value", "-v",
+        help="Secret value (if omitted, you'll be prompted).",
+    ),
 ) -> None:
     """Store a secret in the system keyring."""
     if name not in SECRET_KEYS:
@@ -124,12 +129,116 @@ def config_set_secret(
         console.print(f"Valid secrets: {valid}")
         raise typer.Exit(1)
 
-    value = typer.prompt(f"Enter value for {name}", hide_input=True)
     if not value:
-        console.print("[red]Value cannot be empty.[/red]")
+        value = typer.prompt(f"Enter value for {name}", hide_input=True)
+    if not value or len(value) < 8:
+        console.print(
+            "[red]Value is empty or too short (< 8 chars).[/red] "
+            "If paste isn't working, use: "
+            f"[cyan]tribal config set-secret {name} --value YOUR_KEY[/cyan]"
+        )
         raise typer.Exit(1)
 
     credential_key = SECRET_KEYS[name]
     set_credential(credential_key, value)
     clear_settings_cache()
-    console.print(f"[green]Stored[/green] {name} in system keyring.")
+    masked = value[:4] + "\u2022" * 8 + value[-4:]
+    console.print(f"[green]Stored[/green] {name} in system keyring: {masked}")
+
+
+@config_app.command("assistants")
+def config_assistants() -> None:
+    """List all Backboard assistants (debug helper)."""
+    import asyncio
+
+    from tribalmind.backboard.assistants import list_assistants
+    from tribalmind.backboard.client import BackboardError, create_client
+
+    async def _list():
+        async with create_client() as client:
+            return await list_assistants(client)
+
+    try:
+        assistants = asyncio.run(_list())
+    except BackboardError as e:
+        console.print(f"[red]API error {e.status_code}:[/red] {e.detail}")
+        raise typer.Exit(1)
+
+    if not assistants:
+        console.print("[dim]No assistants found.[/dim]")
+        return
+
+    table = Table(title="Backboard Assistants")
+    table.add_column("ID", style="cyan")
+    table.add_column("Name", style="green")
+    table.add_column("Created", style="dim")
+
+    for a in assistants:
+        table.add_row(
+            a.get("assistant_id", "?"),
+            a.get("name", "?"),
+            a.get("created_at", "?"),
+        )
+
+    console.print(table)
+
+
+@config_app.command("clear-memory")
+def config_clear_memory(
+    assistant_id: str | None = typer.Option(
+        None, "--assistant", "-a",
+        help="Assistant ID (defaults to project assistant).",
+    ),
+    yes: bool = typer.Option(False, "--yes", "-y", help="Skip confirmation prompt."),
+) -> None:
+    """Clear ALL memories for an assistant."""
+    import asyncio
+
+    from tribalmind.backboard.client import BackboardError, create_client
+    from tribalmind.backboard.memory import clear_memories
+
+    settings = TribalSettings()
+    target_id = assistant_id or settings.project_assistant_id
+
+    if not target_id:
+        console.print(
+            "[red]No assistant ID specified.[/red] "
+            "Use --assistant or set project-assistant-id in tribal.yaml."
+        )
+        raise typer.Exit(1)
+
+    if not yes:
+        confirm = typer.confirm(f"Delete ALL memories for assistant {target_id}?")
+        if not confirm:
+            raise typer.Abort()
+
+    async def _clear():
+        async with create_client() as client:
+            return await clear_memories(client, target_id)
+
+    try:
+        deleted = asyncio.run(_clear())
+        console.print(f"[green]Cleared[/green] {deleted} memories from assistant {target_id}")
+    except BackboardError as e:
+        console.print(f"[red]API error {e.status_code}:[/red] {e.detail}")
+        raise typer.Exit(1)
+
+
+@config_app.command("debug-key")
+def config_debug_key() -> None:
+    """Show API key details for debugging connection issues."""
+    raw = get_credential(BACKBOARD_API_KEY)
+    if not raw:
+        console.print("[red]No API key in keyring.[/red]")
+        return
+
+    console.print(f"Length:  {len(raw)}")
+    console.print(f"Repr:   {repr(raw[:20])}")
+    if len(raw) >= 8:
+        console.print(f"Preview: {raw[:4]}{'•' * 8}{raw[-4:]}")
+    else:
+        console.print(f"[red]Key is too short ({len(raw)} chars) — likely corrupted.[/red]")
+        console.print(
+            "Re-set with: [cyan]tribal config set-secret"
+            " backboard-api-key --value YOUR_KEY[/cyan]"
+        )

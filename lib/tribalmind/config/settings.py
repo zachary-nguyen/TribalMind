@@ -123,6 +123,9 @@ class TribalSettings(BaseSettings):
     # Team sharing
     team_sharing_enabled: bool = False
 
+    # Promotion
+    trust_threshold: float = 3.0  # trust_score needed to promote local -> org
+
     # Ignore patterns for shell monitoring
     ignore_commands: list[str] = Field(
         default_factory=lambda: ["cd", "ls", "pwd", "clear", "cls", "echo", "cat", "less", "more"]

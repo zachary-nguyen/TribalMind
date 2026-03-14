@@ -46,6 +46,10 @@ class BackboardClient:
     ) -> dict[str, Any]:
         """Make an authenticated API request and return JSON response."""
         try:
+            logger.debug(
+                "%s %s json=%s params=%s",
+                method, path, json, params,
+            )
             response = await self._client.request(
                 method, path, json=json, params=params, data=data, files=files,
             )
@@ -62,6 +66,9 @@ class BackboardClient:
                 detail = response.json().get("detail", detail)
             except Exception:
                 pass
+            logger.error(
+                "%s %s -> %s: %s", method, path, response.status_code, detail,
+            )
             raise BackboardError(response.status_code, detail)
 
         if response.status_code == 204:

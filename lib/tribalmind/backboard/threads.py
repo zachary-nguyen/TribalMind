@@ -40,7 +40,7 @@ async def send_message(
     thread_id: str,
     content: str,
     *,
-    memory_mode: str = "Auto",
+    memory_mode: str = "off",
     llm_provider: str | None = None,
     model_name: str | None = None,
     stream: bool = False,
@@ -62,7 +62,7 @@ async def send_message(
 
     return await client.post(
         f"/threads/{thread_id}/messages",
-        data=payload,
+        json=payload,
     )
 
 

@@ -30,6 +30,7 @@ class MemoryEntry:
     confidence: float = 0.0
     trust_score: float = 0.0
     relevance_score: float = 0.0  # from search results
+    sig: str = ""  # error signature for deduplication
     raw: dict[str, Any] = field(default_factory=dict)
 
 
@@ -42,6 +43,7 @@ def encode_memory(
     fix_text: str = "",
     confidence: float = 0.0,
     trust_score: float = 0.0,
+    sig: str = "",
     extra: str = "",
 ) -> str:
     """Encode structured data into a Backboard memory content string."""
@@ -51,6 +53,8 @@ def encode_memory(
         parts.append(f"package={package}")
     if version:
         parts.append(f"version={version}")
+    if sig:
+        parts.append(f"sig={sig}")
 
     parts.append("|")
 
@@ -78,7 +82,7 @@ def parse_memory(content: str, raw: dict[str, Any] | None = None) -> MemoryEntry
     entry = MemoryEntry(content=content, raw=raw or {})
 
     if raw:
-        entry.memory_id = raw.get("id", raw.get("memory_id", ""))
+        entry.memory_id = raw.get("memory_id", raw.get("id", ""))
         entry.relevance_score = raw.get("score", raw.get("relevance", 0.0))
 
     # Parse category tag
@@ -97,6 +101,8 @@ def parse_memory(content: str, raw: dict[str, Any] | None = None) -> MemoryEntry
             entry.confidence = float(val)
         elif key == "trust":
             entry.trust_score = float(val)
+        elif key == "sig":
+            entry.sig = val
 
     # Parse fix text
     fix_match = re.search(r"fix:\s*(.+?)(?:\s*\||$)", content)
@@ -173,3 +179,17 @@ async def delete_memory(
 ) -> None:
     """Delete a memory."""
     await client.delete(f"/assistants/{assistant_id}/memories/{memory_id}")
+
+
+async def clear_memories(
+    client: BackboardClient,
+    assistant_id: str,
+) -> int:
+    """Delete ALL memories for an assistant. Returns count deleted."""
+    entries = await list_memories(client, assistant_id)
+    deleted = 0
+    for entry in entries:
+        if entry.memory_id:
+            await delete_memory(client, assistant_id, entry.memory_id)
+            deleted += 1
+    return deleted

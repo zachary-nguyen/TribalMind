@@ -29,19 +29,17 @@ async def create_assistant(
     client: BackboardClient,
     name: str,
     system_prompt: str,
-    embedding_provider: str = "openai",
-    embedding_model: str = "text-embedding-3-small",
-    embedding_dims: int = 1536,
 ) -> dict[str, Any]:
-    """Create a new Backboard assistant."""
+    """Create a new Backboard assistant.
+
+    Embedding config (provider, model, dims) is determined server-side
+    and cannot be overridden via the API.
+    """
     return await client.post(
         "/assistants",
         json={
             "name": name,
             "system_prompt": system_prompt,
-            "embedding_provider": embedding_provider,
-            "embedding_model": embedding_model,
-            "embedding_dims": embedding_dims,
         },
     )
 
@@ -72,9 +70,6 @@ async def delete_assistant(client: BackboardClient, assistant_id: str) -> None:
 async def get_or_create_project_assistant(
     client: BackboardClient,
     project_root: str,
-    embedding_provider: str = "openai",
-    embedding_model: str = "text-embedding-3-small",
-    embedding_dims: int = 1536,
 ) -> dict[str, Any]:
     """Find or create the Backboard assistant for a project.
 
@@ -87,7 +82,10 @@ async def get_or_create_project_assistant(
     assistants = await list_assistants(client)
     for a in assistants:
         if a.get("name") == name:
-            logger.info("Found existing assistant %s for project %s", a.get("id"), project_root)
+            logger.info(
+                "Found existing assistant %s for project %s",
+                a.get("assistant_id"), project_root,
+            )
             return a
 
     # Create new assistant
@@ -102,7 +100,4 @@ async def get_or_create_project_assistant(
         client,
         name=name,
         system_prompt=system_prompt,
-        embedding_provider=embedding_provider,
-        embedding_model=embedding_model,
-        embedding_dims=embedding_dims,
     )

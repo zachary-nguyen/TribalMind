@@ -28,7 +28,7 @@ def ui(
     import webbrowser
 
     url = f"http://localhost:{port}"
-    console.print(f"[green]TribalMind UI →[/green] {url}")
+    console.print(f"[green]TribalMind UI ->[/green] {url}")
     console.print("[dim]Press Ctrl+C to stop.[/dim]")
 
     if not no_browser:

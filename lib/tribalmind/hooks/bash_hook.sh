@@ -5,6 +5,7 @@
 
 _TRIBAL_DAEMON_HOST="127.0.0.1"
 _TRIBAL_DAEMON_PORT="7483"
+_TRIBAL_IGNORE_CMDS="cd ls pwd clear cls echo cat less more dir type pushd popd"
 
 _tribalmind_preexec() {
     export _TRIBAL_CMD="$1"
@@ -13,16 +14,61 @@ _tribalmind_preexec() {
 _tribalmind_precmd() {
     local exit_code=$?
     if [ -n "$_TRIBAL_CMD" ]; then
-        # Send event to daemon via TCP (fire-and-forget, non-blocking)
-        {
-            printf '{"type":"shell_event","payload":{"command":"%s","exit_code":%d,"cwd":"%s","timestamp":%d,"shell":"bash"}}\n' \
-                "$(echo "$_TRIBAL_CMD" | sed 's/"/\\"/g' | head -c 500)" \
-                "$exit_code" \
-                "$(echo "$PWD" | sed 's/"/\\"/g')" \
-                "$(date +%s)" \
-                > /dev/tcp/$_TRIBAL_DAEMON_HOST/$_TRIBAL_DAEMON_PORT 2>/dev/null
-        } &
-        disown 2>/dev/null
+        # Client-side ignore filter
+        local base_cmd="${_TRIBAL_CMD%% *}"
+        base_cmd="${base_cmd##*/}"  # strip path prefix
+        for _ign in $_TRIBAL_IGNORE_CMDS; do
+            if [ "$base_cmd" = "$_ign" ]; then
+                unset _TRIBAL_CMD
+                return
+            fi
+        done
+
+        # Skip Ctrl+C / signal exits (130=SIGINT, 137=SIGKILL, 143=SIGTERM)
+        if [ "$exit_code" -eq 130 ] || [ "$exit_code" -eq 137 ] || [ "$exit_code" -eq 143 ]; then
+            unset _TRIBAL_CMD
+            return
+        fi
+
+        local json
+        json=$(printf '{"type":"shell_event","payload":{"command":"%s","exit_code":%d,"cwd":"%s","timestamp":%d,"shell":"bash"}}\n' \
+            "$(echo "$_TRIBAL_CMD" | sed 's/"/\\"/g' | head -c 500)" \
+            "$exit_code" \
+            "$(echo "$PWD" | sed 's/"/\\"/g')" \
+            "$(date +%s)")
+
+        if [ "$exit_code" -ne 0 ]; then
+            # Failed command: show spinner and wait for insight response
+            local tmpfile="/tmp/.tribalmind_insight_$$"
+            echo "$json" | nc -w 15 "$_TRIBAL_DAEMON_HOST" "$_TRIBAL_DAEMON_PORT" > "$tmpfile" 2>/dev/null &
+            local nc_pid=$!
+
+            local -a frames=($'\xe2\xa3\xb7' $'\xe2\xa3\xaf' $'\xe2\xa3\x9f' $'\xe2\xa1\xbf' $'\xe2\xa2\xbf' $'\xe2\xa3\xbb' $'\xe2\xa3\xbd' $'\xe2\xa3\xbe')
+            local i=0
+            printf '\n  \033[36m%s TribalMind analyzing...\033[0m' "${frames[0]}"
+            while kill -0 "$nc_pid" 2>/dev/null; do
+                i=$(( (i + 1) % 8 ))
+                printf '\r  \033[36m%s TribalMind analyzing...\033[0m' "${frames[$i]}"
+                sleep 0.08
+            done
+            printf '\r%40s\r' ""
+
+            wait "$nc_pid" 2>/dev/null
+            if [ -s "$tmpfile" ]; then
+                local text
+                text=$(python3 -c "import sys,json; d=json.load(sys.stdin); t=d.get('payload',{}).get('text',''); print(t)" < "$tmpfile" 2>/dev/null)
+                if [ -n "$text" ]; then
+                    echo "$text"
+                fi
+            fi
+            rm -f "$tmpfile"
+        else
+            # Successful command: fire-and-forget
+            {
+                echo "$json" > /dev/tcp/$_TRIBAL_DAEMON_HOST/$_TRIBAL_DAEMON_PORT 2>/dev/null
+            } &
+            disown 2>/dev/null
+        fi
         unset _TRIBAL_CMD
     fi
 }

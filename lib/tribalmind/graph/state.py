@@ -64,6 +64,7 @@ class TribalState(TypedDict, total=False):
 
     # UI node output
     displayed: bool
+    rendered_insight: str | None
 
     # Accumulated log (uses reducer to append across nodes)
     log: Annotated[list[str], operator.add]
