@@ -37,6 +37,12 @@ def main(
         from tribalmind.cli.banner import print_banner  # noqa: E402
 
         print_banner()
+    else:
+        # Prompt to upgrade if running an old version (skip when already running upgrade)
+        if ctx.invoked_subcommand != "upgrade":
+            from tribalmind.cli.version_check import check_and_notify  # noqa: E402
+
+            check_and_notify()
 
 
 # Register subcommands
@@ -65,6 +71,10 @@ app.command()(ui)
 from tribalmind.cli.watch_cmd import watch_app  # noqa: E402
 
 app.add_typer(watch_app, name="watch", help="Manage watched directories.")
+
+from tribalmind.cli.upgrade_cmd import upgrade  # noqa: E402
+
+app.command()(upgrade)
 
 
 if __name__ == "__main__":

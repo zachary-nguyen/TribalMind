@@ -11,6 +11,10 @@ LOGO_COLOR = "bold cyan"
 BORDER_STYLE = "cyan"
 TAGLINE_STYLE = "dim"
 
+# Block-drawing chars (█╗║ etc.) are often double-width in terminals; use explicit
+# width so the panel doesn't wrap. Max line length 78 → 78*2 + border/padding.
+LOGO_DISPLAY_WIDTH = 162
+
 LOGO_RAW = [
     "  ████████╗██████╗ ██╗██████╗  █████╗ ██╗     ███╗   ███╗██╗███╗  ██╗██████╗",
     "  ╚══██╔══╝██╔══██╗██║██╔══██╗██╔══██╗██║     ████╗ ████║██║████╗ ██║██╔══██╗",
@@ -46,6 +50,7 @@ def print_banner(*, compact: bool = False) -> None:
             border_style=BORDER_STYLE,
             padding=(0, 1),
             expand=False,
+            width=LOGO_DISPLAY_WIDTH,
         )
         console.print(panel)
         console.print()

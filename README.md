@@ -125,6 +125,46 @@ pytest
 ruff check lib/ tests/
 ```
 
+### Local development vs published install
+
+Use two virtual environments so you can develop against your repo and still try the published package.
+
+1. **Dev env** — editable install; `tribal` uses your local source as you edit:
+
+   ```bash
+   cd TribalMind
+   python -m venv .venv
+   .venv\Scripts\activate   # Windows
+   # source .venv/bin/activate   # macOS/Linux
+   pip install -e ".[dev,ui]"
+   ```
+
+2. **Published env** — install from PyPI to behave like an end user:
+
+   ```bash
+   python -m venv .venv-published
+   .venv-published\Scripts\activate   # Windows
+   # source .venv-published/bin/activate   # macOS/Linux
+   pip install tribalmind[ui]
+   ```
+
+   Run `tribal` from this env to test the current PyPI version. Switch envs by activating the one you want; no need to uninstall.
+
+3. **Test your built wheel** — to try the exact artifact you’ll publish:
+
+   ```bash
+   pip install build
+   python -m build
+   .venv-published\Scripts\activate
+   pip install --force-reinstall .\dist\tribalmind-*.whl
+   ```
+
+| Goal | Env | Install |
+|------|-----|--------|
+| Day-to-day development | `.venv` | `pip install -e ".[dev,ui]"` |
+| Try current PyPI version | `.venv-published` | `pip install tribalmind[ui]` |
+| Try your built wheel | `.venv-published` | `pip install dist\tribalmind-*.whl` |
+
 ### Commit Convention
 
 This project uses [Conventional Commits](https://www.conventionalcommits.org/) for automatic semantic versioning. Every push to `master` is evaluated and a release is created automatically if the commits warrant one.
