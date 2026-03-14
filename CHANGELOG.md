@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.5.0 (2026-03-14)
+
+### Features
+
+- Update README and enhance CLI aesthetics
+  ([`59507a8`](https://github.com/zachary-nguyen/TribalMind/commit/59507a84e706bfe84c20e06ad4b32fe48cd1aa71))
+
+
 ## v1.4.0 (2026-03-14)
 
 ### Features
