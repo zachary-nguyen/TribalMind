@@ -38,11 +38,19 @@ def _save(path: Path, data: dict) -> None:
 def watch_add(
     path: Path = typer.Argument(
         default=None,
-        help="Directory to watch. Defaults to the current directory.",
+        help="Directory to watch. Omit to pick interactively with arrow keys.",
     ),
 ) -> None:
     """Add a directory to the watch list."""
-    target = (path or Path.cwd()).resolve()
+    if path is None:
+        from tribalmind.cli.dir_picker import pick_directory
+
+        target = pick_directory()
+        if target is None:
+            console.print("[dim]Cancelled.[/dim]")
+            raise typer.Exit(0)
+    else:
+        target = path.resolve()
 
     if not target.is_dir():
         console.print(f"[red]Not a directory:[/red] {target}")
@@ -103,7 +111,7 @@ def watch_list() -> None:
         console.print(
             "[yellow]No directories configured — daemon is not monitoring any commands.[/yellow]"
         )
-        console.print("[dim]Add one with: tribal watch add [path][/dim]")
+        console.print("[dim]Add one with: tribal watch add[/dim] (or [dim]tribal watch add <path>[/dim])")
         return
 
     table = Table(title="Watched Directories", show_lines=True)

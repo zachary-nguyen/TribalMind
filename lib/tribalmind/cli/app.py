@@ -21,6 +21,7 @@ def version_callback(value: bool) -> None:
 
 @app.callback()
 def main(
+    ctx: typer.Context,
     version: bool = typer.Option(
         False, "--version", "-v", help="Show version and exit.", callback=version_callback,
         is_eager=True,
@@ -31,6 +32,11 @@ def main(
     Observes terminal activity, correlates errors with upstream library health,
     and shares validated fixes across your team.
     """
+    # Show logo when displaying main help (no subcommand) or for install
+    if ctx.invoked_subcommand is None:
+        from tribalmind.cli.banner import print_banner  # noqa: E402
+
+        print_banner()
 
 
 # Register subcommands

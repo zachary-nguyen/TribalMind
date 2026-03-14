@@ -22,6 +22,7 @@ dependencies = [
     "keyring>=25",
     "pygithub>=2",
     "platformdirs>=4",
+    "questionary>=2.0",
 ]
 
 [project.optional-dependencies]

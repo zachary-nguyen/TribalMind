@@ -18,6 +18,7 @@ def install(
     skip_hooks: bool = typer.Option(False, "--skip-hooks", help="Skip shell hook installation."),
 ) -> None:
     """Install TribalMind: set up shell hooks and configure credentials."""
+    from tribalmind.cli.banner import print_banner
     from tribalmind.config.credentials import (
         BACKBOARD_API_KEY,
         get_backboard_api_key,
@@ -25,7 +26,7 @@ def install(
     )
     from tribalmind.hooks.generator import detect_shell, install_hook
 
-    console.print("[bold]TribalMind Installation[/bold]\n")
+    print_banner()
 
     # Step 1: Check / prompt for Backboard API key
     api_key = get_backboard_api_key()
@@ -67,11 +68,12 @@ def _setup_watch_dirs() -> None:
     """Interactively prompt the user to configure watched directories."""
     import yaml
 
+    from tribalmind.cli.dir_picker import pick_directory
     from tribalmind.config.settings import clear_settings_cache, get_settings
 
     console.print("\n[bold]Watched Directories[/bold]")
     console.print("TribalMind only monitors commands run inside directories you specify.")
-    console.print("[dim]Press Enter with no input to finish.[/dim]\n")
+    console.print("[dim]Use arrow keys to navigate; pick [green]Select this directory[/green] to add.[/dim]\n")
 
     settings = get_settings()
     config_path = settings.config_dir / "tribal.yaml"
@@ -86,18 +88,10 @@ def _setup_watch_dirs() -> None:
 
     dirs = list(existing)
     while True:
-        raw = typer.prompt(
-            "Directory to watch (Enter to skip)",
-            default="",
-            show_default=False,
-        )
-        if not raw:
+        target = pick_directory()
+        if target is None:
             break
 
-        target = Path(raw).expanduser().resolve()
-        if not target.is_dir():
-            console.print(f"[red]Not a directory:[/red] {target}")
-            continue
         if str(target) in dirs:
             console.print(f"[yellow]Already added:[/yellow] {target}")
             continue
@@ -105,8 +99,11 @@ def _setup_watch_dirs() -> None:
         dirs.append(str(target))
         console.print(f"[green]Added:[/green] {target}")
 
+        if not typer.confirm("Add another directory?", default=True):
+            break
+
     if not dirs:
-        console.print("[yellow]No directories set. Add them later with: tribal watch add[/yellow]")
+        console.print("[yellow]No directories set. Add them later with: tribal watch add[/yellow] (interactive picker)")
         return
 
     # Persist to user config
