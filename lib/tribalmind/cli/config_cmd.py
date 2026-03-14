@@ -103,8 +103,8 @@ def config_list() -> None:
     """Show all resolved configuration values."""
     settings = TribalSettings()
     table = Table(title="TribalMind Configuration", show_lines=True)
-    table.add_column("Key", style="cyan")
-    table.add_column("Value", style="green")
+    table.add_column("Key", style="#a78bfa")
+    table.add_column("Value", style="#34d399")
 
     for field_name, field_info in settings.model_fields.items():
         value = getattr(settings, field_name)
@@ -135,7 +135,7 @@ def config_set_secret(
         console.print(
             "[red]Value is empty or too short (< 8 chars).[/red] "
             "If paste isn't working, use: "
-            f"[cyan]tribal config set-secret {name} --value YOUR_KEY[/cyan]"
+            f"[#a78bfa]tribal config set-secret {name} --value YOUR_KEY[/#a78bfa]"
         )
         raise typer.Exit(1)
 
@@ -169,8 +169,8 @@ def config_assistants() -> None:
         return
 
     table = Table(title="Backboard Assistants")
-    table.add_column("ID", style="cyan")
-    table.add_column("Name", style="green")
+    table.add_column("ID", style="#a78bfa")
+    table.add_column("Name", style="#34d399")
     table.add_column("Created", style="dim")
 
     for a in assistants:
@@ -239,6 +239,6 @@ def config_debug_key() -> None:
     else:
         console.print(f"[red]Key is too short ({len(raw)} chars) — likely corrupted.[/red]")
         console.print(
-            "Re-set with: [cyan]tribal config set-secret"
-            " backboard-api-key --value YOUR_KEY[/cyan]"
+            "Re-set with: [#a78bfa]tribal config set-secret"
+            " backboard-api-key --value YOUR_KEY[/#a78bfa]"
         )

@@ -139,7 +139,7 @@ export default function MemoryPage() {
     <div className="flex flex-col h-full">
       {/* Header */}
       <div className="flex items-center gap-3 border-b border-border px-5 py-3">
-        <Brain className="h-4 w-4 text-teal-400" />
+        <Brain className="h-4 w-4 text-violet-400" />
         <h1 className="text-sm font-semibold">Memory</h1>
         <span className="text-xs text-muted-foreground">
           {filtered.length} {isSearchMode ? "results" : "memories"}
@@ -318,8 +318,8 @@ export default function MemoryPage() {
                       {/* Fix text */}
                       {fix && (
                         <div className="flex items-start gap-1.5 mb-1">
-                          <Wrench className="h-3.5 w-3.5 text-green-400 mt-0.5 shrink-0" />
-                          <span className="text-xs text-green-300 font-mono">{fix}</span>
+                          <Wrench className="h-3.5 w-3.5 text-emerald-400 mt-0.5 shrink-0" />
+                          <span className="text-xs text-emerald-300 font-mono">{fix}</span>
                         </div>
                       )}
 

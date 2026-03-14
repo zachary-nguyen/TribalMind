@@ -32,5 +32,5 @@ def enable_team_sharing(
     clear_settings_cache()
 
     console.print("[green]Team sharing enabled.[/green]")
-    console.print(f"Organization assistant ID: [cyan]{org_assistant_id}[/cyan]")
+    console.print(f"Organization assistant ID: [#a78bfa]{org_assistant_id}[/#a78bfa]")
     console.print("Validated fixes will now be shared with your team.")

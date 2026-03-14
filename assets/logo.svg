@@ -1,0 +1,125 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6366f1"/>
+      <stop offset="100%" stop-color="#8b5cf6"/>
+    </linearGradient>
+    <linearGradient id="glow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#a5b4fc"/>
+      <stop offset="100%" stop-color="#c4b5fd"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#34d399"/>
+      <stop offset="100%" stop-color="#2dd4bf"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background circle -->
+  <circle cx="256" cy="256" r="240" fill="url(#bg)"/>
+
+  <!-- Outer ring decoration -->
+  <circle cx="256" cy="256" r="220" fill="none" stroke="url(#glow)" stroke-width="2" stroke-dasharray="12 8" opacity="0.4"/>
+
+  <!-- Connection lines between outer nodes (tribal network) -->
+  <g stroke="url(#glow)" stroke-width="2" opacity="0.35">
+    <!-- Top to sides -->
+    <line x1="256" y1="88" x2="148" y2="168"/>
+    <line x1="256" y1="88" x2="364" y2="168"/>
+    <!-- Sides to bottom sides -->
+    <line x1="148" y1="168" x2="120" y2="296"/>
+    <line x1="364" y1="168" x2="392" y2="296"/>
+    <!-- Bottom sides to bottom -->
+    <line x1="120" y1="296" x2="200" y2="392"/>
+    <line x1="392" y1="296" x2="312" y2="392"/>
+    <!-- Cross connections -->
+    <line x1="148" y1="168" x2="364" y2="168"/>
+    <line x1="120" y1="296" x2="392" y2="296"/>
+    <line x1="200" y1="392" x2="312" y2="392"/>
+    <!-- Diagonal crosses -->
+    <line x1="148" y1="168" x2="392" y2="296"/>
+    <line x1="364" y1="168" x2="120" y2="296"/>
+  </g>
+
+  <!-- Central brain shape - left hemisphere -->
+  <path d="M256 148
+           C 220 148, 176 172, 176 216
+           C 176 236, 184 252, 196 264
+           C 180 276, 172 296, 176 316
+           C 180 348, 212 372, 248 376
+           L 248 376 L 248 148 Z"
+        fill="white" opacity="0.9"/>
+
+  <!-- Central brain shape - right hemisphere -->
+  <path d="M264 148
+           C 300 148, 344 172, 344 216
+           C 344 236, 336 252, 324 264
+           C 340 276, 348 296, 344 316
+           C 340 348, 308 372, 272 376
+           L 264 376 L 264 148 Z"
+        fill="white" opacity="0.9"/>
+
+  <!-- Brain folds - left -->
+  <g fill="none" stroke="url(#bg)" stroke-width="3.5" stroke-linecap="round">
+    <path d="M216 200 C 228 196, 240 204, 248 196"/>
+    <path d="M196 240 C 212 232, 228 248, 248 236"/>
+    <path d="M200 280 C 216 272, 232 288, 248 276"/>
+    <path d="M208 320 C 220 312, 236 324, 248 316"/>
+  </g>
+
+  <!-- Brain folds - right -->
+  <g fill="none" stroke="url(#bg)" stroke-width="3.5" stroke-linecap="round">
+    <path d="M264 196 C 276 204, 292 196, 304 200"/>
+    <path d="M264 236 C 280 248, 300 232, 316 240"/>
+    <path d="M264 276 C 280 288, 300 272, 316 280"/>
+    <path d="M264 316 C 276 324, 296 312, 308 320"/>
+  </g>
+
+  <!-- Brain stem / spine -->
+  <rect x="250" y="372" width="12" height="28" rx="4" fill="white" opacity="0.9"/>
+
+  <!-- Network nodes (outer tribal ring) -->
+  <g>
+    <!-- Top node -->
+    <circle cx="256" cy="88" r="14" fill="url(#accent)"/>
+    <circle cx="256" cy="88" r="7" fill="white" opacity="0.8"/>
+
+    <!-- Upper left -->
+    <circle cx="148" cy="168" r="12" fill="url(#accent)"/>
+    <circle cx="148" cy="168" r="6" fill="white" opacity="0.8"/>
+
+    <!-- Upper right -->
+    <circle cx="364" cy="168" r="12" fill="url(#accent)"/>
+    <circle cx="364" cy="168" r="6" fill="white" opacity="0.8"/>
+
+    <!-- Mid left -->
+    <circle cx="120" cy="296" r="12" fill="url(#accent)"/>
+    <circle cx="120" cy="296" r="6" fill="white" opacity="0.8"/>
+
+    <!-- Mid right -->
+    <circle cx="392" cy="296" r="12" fill="url(#accent)"/>
+    <circle cx="392" cy="296" r="6" fill="white" opacity="0.8"/>
+
+    <!-- Bottom left -->
+    <circle cx="200" cy="392" r="12" fill="url(#accent)"/>
+    <circle cx="200" cy="392" r="6" fill="white" opacity="0.8"/>
+
+    <!-- Bottom right -->
+    <circle cx="312" cy="392" r="12" fill="url(#accent)"/>
+    <circle cx="312" cy="392" r="6" fill="white" opacity="0.8"/>
+  </g>
+
+  <!-- Pulse rings on key nodes -->
+  <circle cx="256" cy="88" r="20" fill="none" stroke="url(#accent)" stroke-width="1.5" opacity="0.3"/>
+  <circle cx="120" cy="296" r="18" fill="none" stroke="url(#accent)" stroke-width="1.5" opacity="0.3"/>
+  <circle cx="392" cy="296" r="18" fill="none" stroke="url(#accent)" stroke-width="1.5" opacity="0.3"/>
+
+  <!-- Connection lines from brain to nodes -->
+  <g stroke="url(#accent)" stroke-width="1.5" opacity="0.5" stroke-dasharray="4 4">
+    <line x1="248" y1="180" x2="162" y2="168"/>
+    <line x1="264" y1="180" x2="352" y2="168"/>
+    <line x1="176" y1="260" x2="132" y2="290"/>
+    <line x1="344" y1="260" x2="380" y2="290"/>
+    <line x1="230" y1="376" x2="212" y2="388"/>
+    <line x1="282" y1="376" x2="300" y2="388"/>
+  </g>
+</svg>

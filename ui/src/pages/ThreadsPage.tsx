@@ -61,7 +61,7 @@ export default function ThreadsPage() {
     <div className="flex flex-col h-full">
       {/* Header */}
       <div className="flex items-center gap-3 border-b border-border px-5 py-3">
-        <MessageSquare className="h-4 w-4 text-teal-400" />
+        <MessageSquare className="h-4 w-4 text-violet-400" />
         <h1 className="text-sm font-semibold">Threads</h1>
         <span className="text-xs text-muted-foreground">
           {threads.length} total

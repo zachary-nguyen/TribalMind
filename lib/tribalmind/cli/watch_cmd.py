@@ -119,7 +119,7 @@ def watch_list() -> None:
 
     table = Table(title="Watched Directories", show_lines=True)
     table.add_column("#", style="dim", width=4)
-    table.add_column("Path", style="cyan")
+    table.add_column("Path", style="#a78bfa")
     table.add_column("Exists", width=8)
 
     for i, d in enumerate(settings.watch_dirs, 1):

@@ -7,18 +7,18 @@ from pathlib import Path
 import questionary
 from questionary import Choice, Separator, Style
 
-# Coloured style: pointer and highlighted in cyan/green, instruction dim
+# Coloured style: pointer and highlighted in violet, accents in emerald
 PICKER_STYLE = Style([
-    ("qmark", "fg:cyan bold"),
-    ("question", "bold fg:yellow"),
-    ("pointer", "fg:cyan bold"),
-    ("highlighted", "fg:cyan bold"),
-    ("selected", "fg:green"),
+    ("qmark", "fg:#a78bfa bold"),
+    ("question", "bold fg:#c4b5fd"),
+    ("pointer", "fg:#a78bfa bold"),
+    ("highlighted", "fg:#a78bfa bold"),
+    ("selected", "fg:#34d399"),
     ("separator", "fg:ansibrightblack"),
     ("instruction", "fg:ansibrightblack italic"),
     ("text", ""),
-    ("dir", "fg:cyan"),
-    ("action", "fg:green bold"),
+    ("dir", "fg:#818cf8"),
+    ("action", "fg:#34d399 bold"),
     ("muted", "fg:ansibrightblack"),
 ])
 

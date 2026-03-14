@@ -1,94 +1,172 @@
-# TribalMind
+<p align="center">
+  <img src="assets/logo.svg" alt="TribalMind" width="180"/>
+  <h1 align="center">TribalMind</h1>
+  <p align="center">
+    <strong>Your team's shared error memory — so nobody debugs the same thing twice.</strong>
+  </p>
+</p>
 
-[![CI](https://github.com/zachary-nguyen/TribalMind/actions/workflows/ci.yml/badge.svg)](https://github.com/zachary-nguyen/TribalMind/actions/workflows/ci.yml)
-[![Release](https://github.com/zachary-nguyen/TribalMind/actions/workflows/release.yml/badge.svg)](https://github.com/zachary-nguyen/TribalMind/actions/workflows/release.yml)
-[![PyPI](https://img.shields.io/pypi/v/tribalmind)](https://pypi.org/project/tribalmind/)
+<p align="center">
+  <a href="https://github.com/zachary-nguyen/TribalMind/actions/workflows/ci.yml"><img src="https://github.com/zachary-nguyen/TribalMind/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://github.com/zachary-nguyen/TribalMind/actions/workflows/release.yml"><img src="https://github.com/zachary-nguyen/TribalMind/actions/workflows/release.yml/badge.svg" alt="Release"></a>
+  <a href="https://pypi.org/project/tribalmind/"><img src="https://img.shields.io/pypi/v/tribalmind" alt="PyPI"></a>
+  <a href="https://pypi.org/project/tribalmind/"><img src="https://img.shields.io/pypi/pyversions/tribalmind" alt="Python"></a>
+  <a href="https://github.com/zachary-nguyen/TribalMind/blob/master/LICENSE"><img src="https://img.shields.io/github/license/zachary-nguyen/TribalMind" alt="License"></a>
+</p>
 
-Federated Developer Knowledge Agent — an autonomous, background-running agent that observes terminal activity, correlates local errors with upstream library health, and shares validated fixes across your team.
+---
+
+TribalMind is a **federated developer knowledge agent** that runs quietly in the background, watches your terminal for errors, and builds a shared knowledge base of fixes across your team. Think of it as muscle memory for your entire engineering org — powered by [Backboard](https://docs.backboard.io/).
+
+> **Hit an obscure error at 2 AM?** If anyone on your team has seen it before, TribalMind already knows the fix.
 
 ## How It Works
 
-1. **Shell hooks** capture commands and exit codes as you work
+```
+  You type a command
+        │
+        ▼
+  Shell hook captures it ──► Daemon processes the error
+                                     │
+                    ┌────────────────┼────────────────┐
+                    ▼                ▼                ▼
+              Local history    Team knowledge    GitHub issues
+                    │                │                │
+                    └────────────────┼────────────────┘
+                                     ▼
+                          Fix suggested + stored
+                                     │
+                                     ▼
+                        Promoted to team when trusted
+```
+
+1. **Shell hooks** silently capture commands and exit codes as you work
 2. A **background daemon** processes errors through a LangGraph state machine
 3. Errors are matched against **local history**, **team knowledge**, and **upstream GitHub issues**
 4. Validated fixes are stored in [Backboard](https://docs.backboard.io/) and promoted to your team when trust thresholds are met
 
-## Installation
+## Quick Start
+
+Get up and running in under a minute:
 
 ```bash
 pip install tribalmind
 tribal install
+tribal start
 ```
 
-`tribal install` will:
-- Prompt for your Backboard API key (stored in your system keyring)
-- Detect your shell (bash, zsh, or PowerShell) and install the appropriate hook
-- Prompt for directories to monitor
+That's it. `tribal install` walks you through everything:
 
-## Usage
+1. **Backboard API key** — prompts for your key and stores it securely in your system keyring
+2. **Project assistant** — creates a Backboard assistant scoped to your project
+3. **Shell hooks** — detects your shell (bash, zsh, or PowerShell) and installs the appropriate hook
+4. **Watch directories** — lets you pick which directories to monitor
+
+## Commands
+
+### Daemon
 
 ```bash
-# Start the background daemon
-tribal start
-
-# Check daemon status
-tribal status
-
-# Stop the daemon
-tribal stop
-
-# Enable team-wide knowledge sharing
-tribal enable-team-sharing --org-id <your-org-assistant-id>
+tribal start               # Start the background daemon
+tribal start --foreground  # Run in foreground (useful for debugging)
+tribal stop                # Stop the daemon
+tribal status              # Show daemon status (running/stopped, PID, health)
 ```
 
 ### Watched Directories
 
-TribalMind only monitors commands run inside directories you explicitly configure. Nothing is monitored by default.
+TribalMind only monitors commands run inside directories you explicitly configure — nothing is watched by default.
 
 ```bash
-# Add current directory to the watch list
-tribal watch add
-
-# Add a specific path
-tribal watch add ~/dev/my-project
-
-# See what's being watched
-tribal watch list
-
-# Remove a directory
-tribal watch remove ~/dev/my-project
+tribal watch add                   # Interactive directory picker
+tribal watch add ~/dev/my-project  # Add a specific path
+tribal watch list                  # Show all watched directories
+tribal watch remove ~/dev/project  # Stop watching a directory
 ```
 
 ### Configuration
 
 ```bash
-# Set a config value (writes to tribal.yaml)
-tribal config set llm-provider openai
+tribal config set llm-provider openai       # Set a config value
 tribal config set model-name gpt-4o
-
-# Store secrets in the system keyring
-tribal config set-secret backboard-api-key
-tribal config set-secret github-token
-
-# View all resolved configuration
-tribal config list
+tribal config get llm-provider              # Read a single value
+tribal config list                          # Show all resolved config (secrets redacted)
 ```
 
-Copy `tribal.yaml.example` to `tribal.yaml` in your project root to customize settings. Values can also be set via `TRIBAL_*` environment variables.
+<details>
+<summary>All config keys</summary>
 
-## Live Log UI
+`backboard-base-url` `llm-provider` `model-name` `embedding-provider` `embedding-model` `daemon-host` `daemon-port` `team-sharing-enabled` `org-assistant-id` `project-assistant-id`
 
-A browser-based log viewer streams daemon activity in real time.
+</details>
+
+### Secrets
+
+Secrets live in your OS keyring — never in plain-text files.
 
 ```bash
-# Install UI dependencies
-pip install 'tribalmind[ui]'
+tribal config set-secret backboard-api-key        # Prompts for value
+tribal config set-secret github-token -v <token>   # Pass value directly
+tribal config debug-key                            # Show masked API key for debugging
+```
 
-# Launch (opens browser automatically)
+### Team Sharing
+
+```bash
+tribal enable-team-sharing --org-id <assistant-id>
+```
+
+Links your project to an organization-wide Backboard assistant so validated fixes flow across your entire team.
+
+### Backboard Helpers
+
+```bash
+tribal config assistants            # List all Backboard assistants
+tribal config clear-memory          # Wipe memories for the project assistant
+tribal config clear-memory -a <id>  # Wipe memories for a specific assistant
+```
+
+### Upgrade
+
+```bash
+tribal upgrade    # Upgrade to the latest version from PyPI
+tribal --version  # Show installed version
+```
+
+## Dashboard UI
+
+TribalMind ships with a browser-based dashboard for full visibility into your daemon, assistants, threads, and knowledge base.
+
+```bash
+pip install 'tribalmind[ui]'
 tribal ui
 ```
 
-`tribal ui` opens your browser automatically. Use `--no-browser` to suppress this, or `--port` to change the port.
+Opens `http://localhost:7484` in your browser. Use `--port` to change the port or `--no-browser` to suppress auto-open.
+
+### Logs
+
+Real-time daemon log streaming via SSE. Filter by level (DEBUG / INFO / WARNING / ERROR), search by message or module, toggle auto-scroll, or clear the buffer.
+
+### Assistants
+
+Browse all Backboard assistants on your account — see names, IDs, embedding models, and creation dates. Jump straight to an assistant's memory or delete it entirely.
+
+### Threads
+
+Inspect conversation threads with expandable message history. Each message is tagged with its role (user / assistant) for easy scanning.
+
+### Memory
+
+The star of the show — a semantic knowledge base browser:
+
+- **Pick an assistant** from the dropdown to load its memories
+- **Semantic search** across all stored knowledge
+- **Filter by category** — error, fix, context, upstream — with dynamic filter buttons
+- Each memory card shows parsed tags: category, package, confidence %, trust score, and similarity to your query
+- Error text in red, fix suggestions in green — scan in seconds
+- Expand any card to see the raw encoded memory
+- Delete individual memories or clear all at once
 
 ## Architecture
 
@@ -97,7 +175,7 @@ Shell Hook (bash/zsh/powershell)
   │  sends JSON over TCP
   ▼
 Daemon (asyncio TCP server on localhost:7483)
-  │  writes logs to ~/Library/Application Support/tribalmind/daemon.log
+  │  writes structured logs
   ▼
 LangGraph State Machine
   ├── Monitor   → parse stderr, classify errors, generate fingerprints
@@ -106,88 +184,12 @@ LangGraph State Machine
   ├── Promotion → trust scoring, local → global knowledge promotion
   └── UI        → Rich terminal insight boxes
 
-Live Log UI (FastAPI + React on localhost:7484)
-  └── SSE stream from daemon log file → browser log viewer
+Dashboard (FastAPI + React on localhost:7484)
+  ├── SSE stream from daemon log → live log viewer
+  └── Backboard API proxy → assistants, threads, memory browser
 ```
 
-**Backboard** provides the unified backend: vector + relational storage for memories, 2200+ LLM models, and semantic search across your knowledge base.
-
-## Development
-
-```bash
-# Install with dev dependencies
-pip install -e ".[dev]"
-
-# Run tests
-pytest
-
-# Lint
-ruff check lib/ tests/
-```
-
-### Local development vs published install
-
-Use two virtual environments so you can develop against your repo and still try the published package.
-
-1. **Dev env** — editable install; `tribal` uses your local source as you edit:
-
-   ```bash
-   cd TribalMind
-   python -m venv .venv
-   .venv\Scripts\activate   # Windows
-   # source .venv/bin/activate   # macOS/Linux
-   pip install -e ".[dev,ui]"
-   ```
-
-2. **Published env** — install from PyPI to behave like an end user:
-
-   ```bash
-   python -m venv .venv-published
-   .venv-published\Scripts\activate   # Windows
-   # source .venv-published/bin/activate   # macOS/Linux
-   pip install tribalmind[ui]
-   ```
-
-   Run `tribal` from this env to test the current PyPI version. Switch envs by activating the one you want; no need to uninstall.
-
-3. **Test your built wheel** — to try the exact artifact you’ll publish:
-
-   ```bash
-   pip install build
-   python -m build
-   .venv-published\Scripts\activate
-   pip install --force-reinstall .\dist\tribalmind-*.whl
-   ```
-
-| Goal | Env | Install |
-|------|-----|--------|
-| Day-to-day development | `.venv` | `pip install -e ".[dev,ui]"` |
-| Try current PyPI version | `.venv-published` | `pip install tribalmind[ui]` |
-| Try your built wheel | `.venv-published` | `pip install dist\tribalmind-*.whl` |
-
-### Commit Convention
-
-This project uses [Conventional Commits](https://www.conventionalcommits.org/) for automatic semantic versioning. Every push to `master` is evaluated and a release is created automatically if the commits warrant one.
-
-| Commit prefix | Example | Version bump |
-|---|---|---|
-| `fix:` | `fix: handle missing watch_dirs` | patch `0.1.0 → 0.1.1` |
-| `feat:` | `feat: add log export command` | minor `0.1.0 → 0.2.0` |
-| `feat!:` or `BREAKING CHANGE:` | `feat!: rename config keys` | major `0.1.0 → 1.0.0` |
-| `chore:`, `docs:`, `ci:`, `test:` | `chore: update deps` | no release |
-
-### Release Flow
-
-```
-git commit -m "feat: add new command"
-git push origin master
-  → CI runs (lint + tests)
-  → PSR detects releasable commit
-  → bumps version in pyproject.toml
-  → builds wheel with bundled UI
-  → publishes to PyPI
-  → creates GitHub release + CHANGELOG
-```
+[**Backboard**](https://docs.backboard.io/) provides the unified backend: vector + relational storage for memories, 2200+ LLM models, and semantic search across your knowledge base.
 
 ## Project Structure
 
@@ -200,9 +202,47 @@ lib/tribalmind/
   daemon/     Asyncio TCP server and IPC protocol
   hooks/      Shell hooks for bash, zsh, and PowerShell
   upstream/   GitHub integration for issue/release monitoring
-  web/        FastAPI server for the live log UI
+  web/        FastAPI server + Backboard API proxy
 
-ui/           React + shadcn log viewer frontend
+ui/           React + Tailwind + shadcn dashboard frontend
+```
+
+## Contributing
+
+```bash
+# Clone and install with dev + ui dependencies
+git clone https://github.com/zachary-nguyen/TribalMind.git
+cd TribalMind
+pip install -e ".[dev,ui]"
+
+# Run tests
+pytest
+
+# Lint
+ruff check lib/ tests/
+```
+
+### Commit Convention
+
+This project uses [Conventional Commits](https://www.conventionalcommits.org/) for automatic semantic versioning. Every push to `master` triggers CI and, if warranted, an automatic release to [PyPI](https://pypi.org/project/tribalmind/).
+
+| Commit prefix | Version bump | Example |
+|---|---|---|
+| `fix:` | patch (0.1.0 → 0.1.1) | `fix: handle missing watch_dirs` |
+| `feat:` | minor (0.1.0 → 0.2.0) | `feat: add memory search to UI` |
+| `feat!:` / `BREAKING CHANGE:` | major (0.1.0 → 1.0.0) | `feat!: rename config keys` |
+| `chore:`, `docs:`, `ci:`, `test:` | no release | `chore: update deps` |
+
+### Release Flow
+
+```
+git commit -m "feat: add new command"
+git push origin master
+  → CI runs (lint + tests)
+  → Semantic Release detects releasable commit
+  → Bumps version, builds wheel with bundled UI
+  → Publishes to PyPI
+  → Creates GitHub release + changelog
 ```
 
 ## License

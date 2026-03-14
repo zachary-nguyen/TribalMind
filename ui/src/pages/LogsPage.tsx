@@ -106,7 +106,7 @@ export default function LogsPage() {
         {/* Connection + Daemon status */}
         <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
           {connected
-            ? <Wifi className="h-3.5 w-3.5 text-green-400" />
+            ? <Wifi className="h-3.5 w-3.5 text-emerald-400" />
             : <WifiOff className="h-3.5 w-3.5 text-red-400" />}
           {connected ? "Connected" : "Reconnecting…"}
         </span>

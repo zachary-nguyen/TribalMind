@@ -73,18 +73,18 @@ def render_insight_panel(state: TribalState) -> str:
 
     table.add_row("Error", Text(error_type, style="bold red"))
     if package:
-        table.add_row("Package", Text(package, style="cyan"))
+        table.add_row("Package", Text(package, style="#a78bfa"))
     table.add_row("Confidence", _confidence_label(confidence))
     table.add_row("Source", Text(source, style="dim"))
     if fix:
         table.add_row("Fix", Text(fix, style="bold white"))
     if promoted:
-        table.add_row("Shared", Text("promoted to team", style="green"))
+        table.add_row("Shared", Text("promoted to team", style="#34d399"))
 
     panel = Panel(
         table,
-        title="[bold blue]TribalMind Insight[/bold blue]",
-        border_style="blue",
+        title="[bold #818cf8]TribalMind Insight[/bold #818cf8]",
+        border_style="#6366f1",
         padding=(1, 2),
     )
 

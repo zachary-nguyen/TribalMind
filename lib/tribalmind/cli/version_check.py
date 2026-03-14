@@ -57,7 +57,7 @@ def print_upgrade_notice(latest: str) -> None:
     """Print a notice asking the user to upgrade."""
     CONSOLE.print(
         "\n[bold yellow]A new version of TribalMind is available.[/] "
-        "Upgrade with:\n  [bold cyan]pip install -U tribalmind[/]\n",
+        "Upgrade with:\n  [bold #a78bfa]pip install -U tribalmind[/]\n",
         highlight=False,
     )
 

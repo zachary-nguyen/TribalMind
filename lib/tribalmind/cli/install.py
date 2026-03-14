@@ -49,11 +49,11 @@ def install(
     # ── Done ───────────────────────────────────────────────────────────
     console.print()
     console.print(Panel(
-        "[bold green]Setup complete![/bold green]\n\n"
-        "Start the daemon:  [cyan]tribal daemon start[/cyan]\n"
-        "View live logs:    [cyan]tribal daemon logs[/cyan]\n"
-        "Open the web UI:   [cyan]tribal ui[/cyan]",
-        border_style="green",
+        "[bold #34d399]Setup complete![/bold #34d399]\n\n"
+        "Start the daemon:  [#a78bfa]tribal start[/#a78bfa]\n"
+        "View live logs:    [#a78bfa]tribal ui[/#a78bfa]\n"
+        "Open the web UI:   [#a78bfa]tribal ui[/#a78bfa]",
+        border_style="#6366f1",
         padding=(1, 2),
     ))
 

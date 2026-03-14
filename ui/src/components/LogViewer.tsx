@@ -122,10 +122,10 @@ function GraphMessage({ message }: { message: string }) {
   // e.g. "graph: monitor: cmd='pip install foo' exit=1 error=True"
   const parts = message.split(/(\w+=\S+)/)
   return (
-    <span className="text-teal-300/90">
+    <span className="text-violet-300/90">
       {parts.map((part, i) =>
         /^\w+=/.test(part)
-          ? <span key={i} className="text-teal-200">{part}</span>
+          ? <span key={i} className="text-violet-200">{part}</span>
           : part
       )}
     </span>

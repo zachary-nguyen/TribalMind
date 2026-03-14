@@ -14,7 +14,7 @@ export function Sidebar() {
     <aside className="flex h-full w-52 shrink-0 flex-col border-r border-border bg-card">
       {/* Brand */}
       <div className="flex items-center gap-2 px-4 py-4 border-b border-border">
-        <Activity className="h-5 w-5 text-teal-400" />
+        <Activity className="h-5 w-5 text-violet-400" />
         <span className="font-semibold tracking-tight text-sm">TribalMind</span>
       </div>
 

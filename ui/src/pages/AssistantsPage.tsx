@@ -41,7 +41,7 @@ export default function AssistantsPage() {
     <div className="flex flex-col h-full">
       {/* Header */}
       <div className="flex items-center gap-3 border-b border-border px-5 py-3">
-        <Bot className="h-4 w-4 text-teal-400" />
+        <Bot className="h-4 w-4 text-violet-400" />
         <h1 className="text-sm font-semibold">Assistants</h1>
         <span className="text-xs text-muted-foreground">
           {assistants.length} total
@@ -107,7 +107,7 @@ export default function AssistantsPage() {
                   <Button
                     size="sm"
                     variant="ghost"
-                    className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-teal-400"
+                    className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-violet-400"
                     onClick={() => navigate(`/memory?assistant=${id}`)}
                     title="View memories"
                   >

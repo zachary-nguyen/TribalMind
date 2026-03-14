@@ -21,7 +21,7 @@ def start(
         raise typer.Exit(0)
 
     if foreground:
-        console.print("[cyan]Starting daemon in foreground...[/cyan]")
+        console.print("[#a78bfa]Starting daemon in foreground...[/#a78bfa]")
         start_foreground()
     else:
         start_daemon()
@@ -57,7 +57,7 @@ def status() -> None:
         console.print(Panel(
             f"[green]Running[/green]  PID: {pid}",
             title="TribalMind Daemon",
-            border_style="green",
+            border_style="#6366f1",
         ))
     elif running and not reachable:
         console.print(Panel(
