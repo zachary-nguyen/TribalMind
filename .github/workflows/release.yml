@@ -72,6 +72,8 @@ jobs:
       - name: Publish to PyPI
         if: steps.next.outputs.version != ''
         uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          skip-existing: true
 
       # Commit, tag, and push — after a successful publish
       - name: Commit and tag release
