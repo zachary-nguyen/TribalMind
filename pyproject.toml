@@ -67,7 +67,7 @@ major_on_zero = false   # breaking changes on 0.x won't bump to 1.0 automaticall
 # No release: chore:, docs:, style:, refactor:, test:, ci:
 allowed_tags = ["feat", "fix", "perf", "refactor"]
 minor_tags = ["feat"]
-patch_tags = ["fix", "perf"]
+patch_tags = ["fix", "perf", "refactor"]
 
 [tool.ruff]
 target-version = "py311"
