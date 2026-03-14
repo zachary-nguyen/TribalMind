@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+
 def _get_version() -> str:
     try:
         from importlib.metadata import version

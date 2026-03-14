@@ -4,7 +4,7 @@
 
 $Global:_TribalDaemonHost = "127.0.0.1"
 $Global:_TribalDaemonPort = 7483
-$Global:_TribalLastCmd = $null
+$Global:_TribalLastHistoryId = 0
 
 function _TribalMind_SendEvent {
     param(
@@ -13,42 +13,40 @@ function _TribalMind_SendEvent {
         [string]$Cwd
     )
 
-    # Fire-and-forget via background job to avoid blocking the prompt
-    Start-Job -ScriptBlock {
-        param($Host_, $Port, $Cmd, $Exit, $Dir)
-        try {
-            $timestamp = [DateTimeOffset]::UtcNow.ToUnixTimeSeconds()
-            $escapedCmd = $Cmd -replace '"', '\"'
-            $escapedDir = $Dir -replace '"', '\"'
-            $json = "{""type"":""shell_event"",""payload"":{""command"":""$escapedCmd"",""exit_code"":$Exit,""cwd"":""$escapedDir"",""timestamp"":$timestamp,""shell"":""powershell""}}`n"
+    # Synchronous fire-and-forget — localhost TCP is sub-millisecond
+    try {
+        $timestamp = [DateTimeOffset]::UtcNow.ToUnixTimeSeconds()
+        $escapedCmd = $Command -replace '\\', '\\' -replace '"', '\"'
+        $escapedDir = $Cwd -replace '\\', '\\' -replace '"', '\"'
+        $json = "{""type"":""shell_event"",""payload"":{""command"":""$escapedCmd"",""exit_code"":$ExitCode,""cwd"":""$escapedDir"",""timestamp"":$timestamp,""shell"":""powershell""}}`n"
 
-            $client = [System.Net.Sockets.TcpClient]::new()
-            $client.Connect($Host_, $Port)
-            $stream = $client.GetStream()
-            $bytes = [System.Text.Encoding]::UTF8.GetBytes($json)
-            $stream.Write($bytes, 0, $bytes.Length)
-            $stream.Flush()
-            $client.Close()
-        } catch {
-            # Silently ignore connection errors
-        }
-    } -ArgumentList $Global:_TribalDaemonHost, $Global:_TribalDaemonPort, $Command, $ExitCode, $Cwd | Out-Null
-
-    # Clean up completed background jobs periodically
-    Get-Job -State Completed | Remove-Job -Force -ErrorAction SilentlyContinue
+        $client = [System.Net.Sockets.TcpClient]::new()
+        $client.Connect($Global:_TribalDaemonHost, $Global:_TribalDaemonPort)
+        $stream = $client.GetStream()
+        $bytes = [System.Text.Encoding]::UTF8.GetBytes($json)
+        $stream.Write($bytes, 0, $bytes.Length)
+        $stream.Flush()
+        $client.Close()
+    } catch {
+        # Silently ignore — daemon may not be running
+    }
 }
 
-# Override prompt to capture post-execution state
+# Override prompt to capture post-execution state.
+# Uses Get-History instead of PSReadLine key handlers — works in all terminals
+# including VS Code integrated terminal.
 $Global:_TribalOriginalPrompt = $function:prompt
 
 function prompt {
     $lastExitCode = $LASTEXITCODE
     $lastSuccess = $?
 
-    if ($Global:_TribalLastCmd) {
+    # Check if a new command was executed since last prompt
+    $lastHist = Get-History -Count 1 -ErrorAction SilentlyContinue
+    if ($lastHist -and $lastHist.Id -ne $Global:_TribalLastHistoryId) {
+        $Global:_TribalLastHistoryId = $lastHist.Id
         $exitCode = if ($lastSuccess) { 0 } else { if ($lastExitCode) { $lastExitCode } else { 1 } }
-        _TribalMind_SendEvent -Command $Global:_TribalLastCmd -ExitCode $exitCode -Cwd $PWD.Path
-        $Global:_TribalLastCmd = $null
+        _TribalMind_SendEvent -Command $lastHist.CommandLine -ExitCode $exitCode -Cwd $PWD.Path
     }
 
     # Restore LASTEXITCODE so we don't interfere with user's scripts
@@ -58,15 +56,7 @@ function prompt {
     & $Global:_TribalOriginalPrompt
 }
 
-# Capture command before execution via PSReadLine
-if (Get-Module PSReadLine) {
-    Set-PSReadLineKeyHandler -Key Enter -ScriptBlock {
-        $line = $null
-        $cursor = $null
-        [Microsoft.PowerShell.PSConsoleReadLine]::GetBufferState([ref]$line, [ref]$cursor)
-        if ($line.Trim()) {
-            $Global:_TribalLastCmd = $line.Trim()
-        }
-        [Microsoft.PowerShell.PSConsoleReadLine]::AcceptLine()
-    }
-}
+# Initialize history ID so we don't re-send old commands on shell startup
+$_initHist = Get-History -Count 1 -ErrorAction SilentlyContinue
+if ($_initHist) { $Global:_TribalLastHistoryId = $_initHist.Id }
+Remove-Variable _initHist -ErrorAction SilentlyContinue

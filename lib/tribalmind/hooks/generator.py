@@ -90,13 +90,27 @@ def get_rc_file(shell: str) -> Path | None:
 
 
 def _get_powershell_profile() -> Path | None:
-    """Get the PowerShell profile path."""
-    # Try common profile locations
+    """Get the PowerShell profile path by asking PowerShell itself."""
+    import subprocess
+
+    # Ask the running PowerShell for its $PROFILE path — works for both 5.1 and 7+
+    for exe in ("powershell.exe", "pwsh.exe", "pwsh"):
+        try:
+            result = subprocess.run(
+                [exe, "-NoProfile", "-NoLogo", "-Command", "Write-Host $PROFILE"],
+                capture_output=True, text=True, timeout=5,
+            )
+            if result.returncode == 0 and result.stdout.strip():
+                return Path(result.stdout.strip())
+        except (FileNotFoundError, subprocess.TimeoutExpired):
+            continue
+
+    # Fallback to common locations
     if sys.platform == "win32":
         docs = Path.home() / "Documents"
         candidates = [
-            docs / "PowerShell" / "Microsoft.PowerShell_profile.ps1",
             docs / "WindowsPowerShell" / "Microsoft.PowerShell_profile.ps1",
+            docs / "PowerShell" / "Microsoft.PowerShell_profile.ps1",
         ]
     else:
         config = Path.home() / ".config"
@@ -108,7 +122,6 @@ def _get_powershell_profile() -> Path | None:
         if c.exists():
             return c
 
-    # Return the first candidate (will be created)
     return candidates[0] if candidates else None
 
 

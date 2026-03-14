@@ -89,21 +89,22 @@ class TribalDaemon:
         # Check ignore list
         command = payload.get("command", "")
         base_cmd = command.split()[0] if command else ""
+        exit_code = payload.get("exit_code", 0)
+        cwd = payload.get("cwd", "")
+        logger.info("Command received: %s (exit=%s, cwd=%s)", base_cmd, exit_code, cwd)
         if base_cmd in self._settings.ignore_commands:
             logger.debug("Ignoring command: %s", base_cmd)
             return
 
-        # Check watch directories — if none configured, ignore everything
-        if not self._settings.watch_dirs:
-            logger.debug("No watch_dirs configured, skipping command")
-            return
-        cwd = Path(payload.get("cwd", ""))
-        if not any(
-            cwd == d or cwd.is_relative_to(d)
-            for d in self._settings.watch_dirs
-        ):
-            logger.debug("Skipping command outside watched dirs: %s", cwd)
-            return
+        # Check watch directories — if none configured, allow everything
+        if self._settings.watch_dirs:
+            cwd = Path(payload.get("cwd", "")).resolve()
+            if not any(
+                cwd == d.resolve() or cwd.is_relative_to(d.resolve())
+                for d in self._settings.watch_dirs
+            ):
+                logger.debug("Skipping command outside watched dirs: %s", cwd)
+                return
 
         event = ShellEvent(
             command=command,
@@ -152,7 +153,7 @@ def run_daemon() -> None:
     file_handler = logging.FileHandler(log_file)
     file_handler.setFormatter(fmt)
 
-    logging.basicConfig(level=logging.INFO, handlers=[console_handler, file_handler])
+    logging.basicConfig(level=logging.DEBUG, handlers=[console_handler, file_handler])
 
     daemon = TribalDaemon()
 

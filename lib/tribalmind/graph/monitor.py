@@ -43,7 +43,7 @@ RUST_ERROR = re.compile(r"error\[E(\d+)\]:\s*(.+)")
 GO_PANIC = re.compile(r"panic:\s*(.+)")
 GO_ERROR = re.compile(r"cannot find package \"([^\"]+)\"")
 
-COMMAND_NOT_FOUND = re.compile(r"(\S+):\s*command not found")
+COMMAND_NOT_FOUND = re.compile(r"(\S+):\s*command not found|The term '(\S+)' is not recognized")
 PERMISSION_DENIED = re.compile(r"Permission denied")
 
 PIP_ERROR = re.compile(
@@ -146,9 +146,14 @@ def parse_error(stderr: str) -> ParsedError:
     # Command not found
     m = COMMAND_NOT_FOUND.search(stderr)
     if m:
+        command = m.group(1) or m.group(3)
+        if not command:
+            return result
+
         result.error_type = "CommandNotFound"
-        result.package = m.group(1)
-        result.message = f"{m.group(1)}: command not found"
+        result.package = command
+
+        result.message = f"{command}: command not found"
         result.signature = _generate_signature(result.error_type, result.package, result.message)
         return result
 

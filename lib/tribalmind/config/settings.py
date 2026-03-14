@@ -25,39 +25,63 @@ def _find_git_root(start: Path) -> Path | None:
     return None
 
 
-def _find_yaml_config() -> Path | None:
-    """Search for tribal.yaml in CWD -> git root -> user config dir."""
+def _find_yaml_configs() -> list[Path]:
+    """Find all tribal.yaml files, ordered from lowest to highest priority.
+
+    Returns: [user config dir, git root, CWD] — only those that exist.
+    Later entries override earlier ones when merged.
+    """
+    candidates: list[Path] = []
     cwd = Path.cwd()
 
-    # Check CWD
-    candidate = cwd / "tribal.yaml"
+    # Lowest priority: user config dir
+    config_dir = Path(platformdirs.user_config_dir("tribalmind"))
+    candidate = config_dir / "tribal.yaml"
     if candidate.exists():
-        return candidate
+        candidates.append(candidate)
 
-    # Walk up to git root
+    # Mid priority: git root (if different from CWD)
     git_root = _find_git_root(cwd)
     if git_root and git_root != cwd:
         candidate = git_root / "tribal.yaml"
         if candidate.exists():
-            return candidate
+            candidates.append(candidate)
 
-    # Check user config dir
-    config_dir = Path(platformdirs.user_config_dir("tribalmind"))
-    candidate = config_dir / "tribal.yaml"
+    # Highest priority: CWD
+    candidate = cwd / "tribal.yaml"
     if candidate.exists():
-        return candidate
+        candidates.append(candidate)
 
-    return None
+    return candidates
 
 
 def _load_yaml_settings() -> dict[str, Any]:
-    """Load settings from the discovered tribal.yaml file."""
-    config_path = _find_yaml_config()
-    if config_path is None:
+    """Load and merge settings from all discovered tribal.yaml files.
+
+    User-level config is the base; project-level configs override scalar
+    values but list values (like watch_dirs) are merged.
+    """
+    configs = _find_yaml_configs()
+    if not configs:
         return {}
-    with open(config_path) as f:
-        data = yaml.safe_load(f)
-    return data if isinstance(data, dict) else {}
+
+    merged: dict[str, Any] = {}
+    for path in configs:
+        with open(path) as f:
+            data = yaml.safe_load(f)
+        if not isinstance(data, dict):
+            continue
+        for key, val in data.items():
+            # For list values, merge instead of replacing
+            if isinstance(val, list) and isinstance(merged.get(key), list):
+                seen = set(str(v) for v in merged[key])
+                for item in val:
+                    if str(item) not in seen:
+                        merged[key].append(item)
+                        seen.add(str(item))
+            else:
+                merged[key] = val
+    return merged
 
 
 class TribalSettings(BaseSettings):
