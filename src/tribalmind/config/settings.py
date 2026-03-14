@@ -105,6 +105,9 @@ class TribalSettings(BaseSettings):
         default_factory=lambda: ["cd", "ls", "pwd", "clear", "cls", "echo", "cat", "less", "more"]
     )
 
+    # Directory filter — if non-empty, only monitor commands run inside these paths
+    watch_dirs: list[Path] = Field(default_factory=list)
+
     @model_validator(mode="before")
     @classmethod
     def _merge_yaml(cls, values: dict[str, Any]) -> dict[str, Any]:
@@ -135,6 +138,11 @@ class TribalSettings(BaseSettings):
     def pid_file(self) -> Path:
         """Path to daemon PID file."""
         return self.runtime_dir / "daemon.pid"
+
+    @property
+    def log_file(self) -> Path:
+        """Path to daemon log file."""
+        return self.data_dir / "daemon.log"
 
 
 @lru_cache(maxsize=1)

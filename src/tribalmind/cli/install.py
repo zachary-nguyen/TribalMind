@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import typer
 from rich.console import Console
 
@@ -42,5 +44,68 @@ def install(
     else:
         console.print("Skipped shell hook installation.")
 
+    # Step 3: Configure watched directories
+    _setup_watch_dirs()
+
     console.print("\n[bold green]Installation complete![/bold green]")
     console.print("Start the daemon with: [cyan]tribal start[/cyan]")
+
+
+def _setup_watch_dirs() -> None:
+    """Interactively prompt the user to configure watched directories."""
+    import yaml
+    from tribalmind.config.settings import get_settings, clear_settings_cache
+
+    console.print("\n[bold]Watched Directories[/bold]")
+    console.print("TribalMind only monitors commands run inside directories you specify.")
+    console.print("[dim]Press Enter with no input to finish.[/dim]\n")
+
+    settings = get_settings()
+    config_path = settings.config_dir / "tribal.yaml"
+    existing: list[str] = [str(d) for d in settings.watch_dirs]
+
+    if existing:
+        console.print("Currently watching:")
+        for d in existing:
+            console.print(f"  [cyan]{d}[/cyan]")
+        if not typer.confirm("\nAdd more directories?", default=False):
+            return
+
+    dirs = list(existing)
+    while True:
+        raw = typer.prompt(
+            "Directory to watch (Enter to skip)",
+            default="",
+            show_default=False,
+        )
+        if not raw:
+            break
+
+        target = Path(raw).expanduser().resolve()
+        if not target.is_dir():
+            console.print(f"[red]Not a directory:[/red] {target}")
+            continue
+        if str(target) in dirs:
+            console.print(f"[yellow]Already added:[/yellow] {target}")
+            continue
+
+        dirs.append(str(target))
+        console.print(f"[green]Added:[/green] {target}")
+
+    if not dirs:
+        console.print("[yellow]No directories set. Add them later with: tribal watch add[/yellow]")
+        return
+
+    # Persist to user config
+    config_path.parent.mkdir(parents=True, exist_ok=True)
+    data: dict = {}
+    if config_path.exists():
+        loaded = yaml.safe_load(config_path.read_text())
+        data = loaded if isinstance(loaded, dict) else {}
+
+    data["watch_dirs"] = dirs
+    with open(config_path, "w") as f:
+        yaml.dump(data, f, default_flow_style=False, sort_keys=False)
+
+    clear_settings_cache()
+    console.print(f"\n[green]Watching {len(dirs)} director{'y' if len(dirs) == 1 else 'ies'}.[/green]")

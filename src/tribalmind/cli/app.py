@@ -52,6 +52,14 @@ from tribalmind.cli.team import enable_team_sharing  # noqa: E402
 
 app.command(name="enable-team-sharing")(enable_team_sharing)
 
+from tribalmind.cli.ui_cmd import ui  # noqa: E402
+
+app.command()(ui)
+
+from tribalmind.cli.watch_cmd import watch_app  # noqa: E402
+
+app.add_typer(watch_app, name="watch", help="Manage watched directories.")
+
 
 if __name__ == "__main__":
     app()

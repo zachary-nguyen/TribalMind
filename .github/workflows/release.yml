@@ -1,0 +1,87 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"   # triggers on v0.2.0, v1.0.0, etc.
+
+jobs:
+  # Run full CI suite before publishing
+  ci:
+    name: CI checks
+    uses: ./.github/workflows/ci.yml
+
+  build:
+    name: Build wheel
+    needs: ci
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: latest
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: pnpm
+          cache-dependency-path: ui/pnpm-lock.yaml
+
+      - name: Verify tag matches package version
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          PKG=$(python -c "import tomllib; d=tomllib.load(open('pyproject.toml','rb')); print(d['project']['version'])")
+          if [ "$TAG" != "$PKG" ]; then
+            echo "Tag $TAG does not match pyproject.toml version $PKG"
+            exit 1
+          fi
+
+      - name: Install hatch
+        run: pip install hatch
+
+      - name: Build wheel + sdist
+        # hatch_build.py hook runs here automatically:
+        #   pnpm install --frozen-lockfile
+        #   pnpm build  →  src/tribalmind/web/static/
+        #   static files bundled into the wheel
+        run: hatch build
+
+      - name: Upload dist artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+  publish:
+    name: Publish to PyPI
+    needs: build
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write   # required for PyPI trusted publishing (no API token needed)
+      contents: write   # required for creating the GitHub release
+
+    steps:
+      - name: Download dist artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          generate_release_notes: true

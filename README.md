@@ -53,6 +53,26 @@ tribal config list
 
 Copy `tribal.yaml.example` to `tribal.yaml` in your project root to customize settings. Values can also be set via `TRIBAL_*` environment variables.
 
+## Live Log UI
+
+A browser-based log viewer streams daemon activity in real time.
+
+```bash
+# Install UI dependencies
+pip install -e ".[ui]"
+cd ui && pnpm install
+
+# Development (hot reload)
+tribal ui                # FastAPI server on http://localhost:7484
+cd ui && pnpm dev        # Vite dev server on http://localhost:5173
+
+# Production build
+cd ui && pnpm build      # outputs ui/dist/
+tribal ui                # serves frontend + API from http://localhost:7484
+```
+
+`tribal ui` opens your browser automatically. Use `--no-browser` to suppress this, or `--port` to change the port.
+
 ## Architecture
 
 ```
@@ -60,7 +80,7 @@ Shell Hook (bash/zsh/powershell)
   │  sends JSON over TCP
   ▼
 Daemon (asyncio TCP server on localhost:7483)
-  │
+  │  writes logs to ~/.local/share/tribalmind/daemon.log
   ▼
 LangGraph State Machine
   ├── Monitor   → parse stderr, classify errors, generate fingerprints
@@ -68,6 +88,9 @@ LangGraph State Machine
   ├── Inference → suggest fixes (via Backboard LLM)
   ├── Promotion → trust scoring, local → global knowledge promotion
   └── UI        → Rich terminal insight boxes
+
+Live Log UI (FastAPI + React on localhost:7484)
+  └── SSE stream from daemon log file → browser log viewer
 ```
 
 **Backboard** provides the unified backend: vector + relational storage for memories, 2200+ LLM models, and semantic search across your knowledge base.
@@ -96,6 +119,9 @@ src/tribalmind/
   daemon/     Asyncio TCP server and IPC protocol
   hooks/      Shell hooks for bash, zsh, and PowerShell
   upstream/   GitHub integration for issue/release monitoring
+  web/        FastAPI server for the live log UI
+
+ui/           React + shadcn log viewer frontend
 ```
 
 ## License

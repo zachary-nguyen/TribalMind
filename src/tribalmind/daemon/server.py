@@ -10,6 +10,7 @@ import asyncio
 import logging
 import signal
 import sys
+from pathlib import Path
 
 from tribalmind.config.settings import get_settings
 from tribalmind.daemon.protocol import DaemonMessage
@@ -92,6 +93,18 @@ class TribalDaemon:
             logger.debug("Ignoring command: %s", base_cmd)
             return
 
+        # Check watch directories — if none configured, ignore everything
+        if not self._settings.watch_dirs:
+            logger.debug("No watch_dirs configured, skipping command")
+            return
+        cwd = Path(payload.get("cwd", ""))
+        if not any(
+            cwd == d or cwd.is_relative_to(d)
+            for d in self._settings.watch_dirs
+        ):
+            logger.debug("Skipping command outside watched dirs: %s", cwd)
+            return
+
         event = ShellEvent(
             command=command,
             exit_code=payload.get("exit_code", 0),
@@ -126,10 +139,20 @@ class TribalDaemon:
 
 def run_daemon() -> None:
     """Entry point for running the daemon (used by manager.py)."""
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
-    )
+    fmt = logging.Formatter("%(asctime)s [%(levelname)s] %(name)s: %(message)s")
+
+    # Console handler (used in foreground mode)
+    console_handler = logging.StreamHandler()
+    console_handler.setFormatter(fmt)
+
+    # File handler (always on — enables UI log streaming)
+    settings = get_settings()
+    log_file = settings.log_file
+    log_file.parent.mkdir(parents=True, exist_ok=True)
+    file_handler = logging.FileHandler(log_file)
+    file_handler.setFormatter(fmt)
+
+    logging.basicConfig(level=logging.INFO, handlers=[console_handler, file_handler])
 
     daemon = TribalDaemon()
 

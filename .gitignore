@@ -50,4 +50,9 @@ Thumbs.db
 # Logs
 *.log
 
+# Frontend
+ui/node_modules/
+ui/.pnpm-store/
+src/tribalmind/web/static/
+
 .claude/

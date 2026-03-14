@@ -20,7 +20,7 @@ _tribalmind_precmd() {
                 "$exit_code" \
                 "${PWD//\"/\\\"}" \
                 "$(date +%s)" \
-                > /dev/tcp/$_TRIBAL_DAEMON_HOST/$_TRIBAL_DAEMON_PORT 2>/dev/null
+                | nc -w 1 "$_TRIBAL_DAEMON_HOST" "$_TRIBAL_DAEMON_PORT" 2>/dev/null
         } &!
         unset _TRIBAL_CMD
     fi

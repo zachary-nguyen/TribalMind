@@ -24,6 +24,10 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+ui = [
+    "fastapi>=0.110",
+    "uvicorn[standard]>=0.29",
+]
 dev = [
     "pytest>=8",
     "pytest-asyncio>=0.23",
@@ -35,8 +39,13 @@ dev = [
 [project.scripts]
 tribal = "tribalmind.cli.app:app"
 
+[tool.hatch.build.hooks.custom]
+path = "hatch_build.py"
+
 [tool.hatch.build.targets.wheel]
 packages = ["src/tribalmind"]
+# Include the compiled frontend even though it's gitignored
+artifacts = ["src/tribalmind/web/static"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

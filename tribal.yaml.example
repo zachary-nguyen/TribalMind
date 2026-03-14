@@ -34,3 +34,10 @@ ignore_commands:
   - cat
   - less
   - more
+
+# Directory filter — only monitor commands run inside these paths.
+# Required: if empty, no commands are monitored.
+# Manage with: tribal watch add / tribal watch remove / tribal watch list
+# watch_dirs:
+#   - /Users/you/dev/my-project
+#   - /Users/you/dev/another-project
