@@ -77,7 +77,9 @@ jobs:
       - name: Commit and tag release
         if: steps.next.outputs.version != ''
         run: |
-          git add pyproject.toml CHANGELOG.md
+          git add pyproject.toml
+          git diff --cached --quiet -- pyproject.toml || true
+          [ -f CHANGELOG.md ] && git add CHANGELOG.md || true
           git commit -m "chore: release v${{ steps.next.outputs.version }} [skip ci]"
           git tag "v${{ steps.next.outputs.version }}"
           git push origin master "v${{ steps.next.outputs.version }}"
