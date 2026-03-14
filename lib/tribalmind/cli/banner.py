@@ -2,8 +2,7 @@
 
 from __future__ import annotations
 
-from rich.console import Group
-from rich.console import Console
+from rich.console import Console, Group
 from rich.panel import Panel
 from rich.text import Text
 
@@ -21,7 +20,9 @@ LOGO_RAW = [
     "     ╚═╝   ╚═╝  ╚═╝╚═╝╚═════╝ ╚═╝  ╚═╝╚══════╝╚═╝     ╚═╝╚═╝╚═╝  ╚══╝╚═════╝ ",
 ]
 
-LOGO_COMPACT = "[bold cyan]Tribal[/][bold cyan]Mind[/] [dim]— Federated Developer Knowledge Agent[/dim]"
+LOGO_COMPACT = (
+    "[bold cyan]Tribal[/][bold cyan]Mind[/] [dim]— Federated Developer Knowledge Agent[/dim]"
+)
 
 
 def print_banner(*, compact: bool = False) -> None:
@@ -31,7 +32,10 @@ def print_banner(*, compact: bool = False) -> None:
         console.print(LOGO_COMPACT + "\n")
     else:
         logo_lines = [Text(line, style=LOGO_COLOR) for line in LOGO_RAW]
-        tagline = Text("Observes terminal activity · shares validated fixes across your team", style=TAGLINE_STYLE)
+        tagline = Text(
+            "Observes terminal activity · shares validated fixes across your team",
+            style=TAGLINE_STYLE,
+        )
         content = Group(
             *logo_lines,
             Text(),

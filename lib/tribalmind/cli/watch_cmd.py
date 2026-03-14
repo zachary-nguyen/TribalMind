@@ -111,7 +111,10 @@ def watch_list() -> None:
         console.print(
             "[yellow]No directories configured — daemon is not monitoring any commands.[/yellow]"
         )
-        console.print("[dim]Add one with: tribal watch add[/dim] (or [dim]tribal watch add <path>[/dim])")
+        console.print(
+            "[dim]Add one with: tribal watch add[/dim] "
+            "(or [dim]tribal watch add <path>[/dim])"
+        )
         return
 
     table = Table(title="Watched Directories", show_lines=True)

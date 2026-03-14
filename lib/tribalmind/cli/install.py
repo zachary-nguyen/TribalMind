@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from pathlib import Path
-
 import typer
 from rich.console import Console
 
@@ -73,7 +71,10 @@ def _setup_watch_dirs() -> None:
 
     console.print("\n[bold]Watched Directories[/bold]")
     console.print("TribalMind only monitors commands run inside directories you specify.")
-    console.print("[dim]Use arrow keys to navigate; pick [green]Select this directory[/green] to add.[/dim]\n")
+    console.print(
+        "[dim]Use arrow keys to navigate; pick [green]Select this directory[/green] "
+        "to add.[/dim]\n"
+    )
 
     settings = get_settings()
     config_path = settings.config_dir / "tribal.yaml"
@@ -103,7 +104,10 @@ def _setup_watch_dirs() -> None:
             break
 
     if not dirs:
-        console.print("[yellow]No directories set. Add them later with: tribal watch add[/yellow] (interactive picker)")
+        console.print(
+            "[yellow]No directories set. Add them later with: tribal watch add[/yellow] "
+            "(interactive picker)"
+        )
         return
 
     # Persist to user config
