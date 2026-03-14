@@ -80,8 +80,11 @@ jobs:
         if: steps.next.outputs.version != ''
         run: |
           git add pyproject.toml
-          git diff --cached --quiet -- pyproject.toml || true
           [ -f CHANGELOG.md ] && git add CHANGELOG.md || true
+          if git diff --cached --quiet; then
+            echo "No version file changes to commit (already committed?). Skipping commit/tag/push."
+            exit 0
+          fi
           git commit -m "chore: release v${{ steps.next.outputs.version }} [skip ci]"
           git tag "v${{ steps.next.outputs.version }}"
           git push origin master "v${{ steps.next.outputs.version }}"

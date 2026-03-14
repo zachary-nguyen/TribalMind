@@ -56,3 +56,6 @@ ui/.pnpm-store/
 lib/tribalmind/web/static/
 
 .claude/
+
+# CI / workflows
+.github/.tmp/
