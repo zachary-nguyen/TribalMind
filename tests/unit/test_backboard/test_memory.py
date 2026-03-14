@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
-
 from tribalmind.backboard.memory import encode_memory, parse_memory
 
 
@@ -32,7 +30,10 @@ class TestEncodeMemory:
 
 class TestParseMemory:
     def test_parse_full_entry(self):
-        content = "[error] package=requests version=2.31 | ConnectionError: timeout | fix: increase timeout | confidence=0.85 trust=0.90"
+        content = (
+            "[error] package=requests version=2.31 | ConnectionError: timeout"
+            " | fix: increase timeout | confidence=0.85 trust=0.90"
+        )
         entry = parse_memory(content)
         assert entry.category == "error"
         assert entry.package == "requests"

@@ -11,7 +11,7 @@ export default defineConfig({
   },
   build: {
     // Output directly into the Python package so it's included in the wheel
-    outDir: "../src/tribalmind/web/static",
+    outDir: "../lib/tribalmind/web/static",
     emptyOutDir: true,
   },
   server: {

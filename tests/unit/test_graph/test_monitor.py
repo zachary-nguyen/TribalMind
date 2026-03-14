@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import pytest
-
 from tribalmind.graph.monitor import monitor_node, parse_error
 from tribalmind.graph.state import ShellEvent
 

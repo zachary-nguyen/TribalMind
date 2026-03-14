@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
-
 from tribalmind.hooks.generator import (
     SENTINEL_BEGIN,
     SENTINEL_END,

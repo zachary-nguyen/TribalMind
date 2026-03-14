@@ -43,9 +43,9 @@ tribal = "tribalmind.cli.app:app"
 path = "hatch_build.py"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/tribalmind"]
+packages = ["lib/tribalmind"]
 # Include the compiled frontend even though it's gitignored
-artifacts = ["src/tribalmind/web/static"]
+artifacts = ["lib/tribalmind/web/static"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

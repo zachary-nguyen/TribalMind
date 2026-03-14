@@ -2,10 +2,6 @@
 
 from __future__ import annotations
 
-import json
-
-import pytest
-
 from tribalmind.daemon.protocol import DaemonMessage
 
 

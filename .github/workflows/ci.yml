@@ -22,7 +22,7 @@ jobs:
         run: pip install ruff
 
       - name: Lint
-        run: ruff check src/ tests/
+        run: ruff check lib/ tests/
 
   test:
     name: Test (Python ${{ matrix.python-version }})

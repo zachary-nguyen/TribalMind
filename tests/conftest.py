@@ -2,10 +2,9 @@
 
 from __future__ import annotations
 
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock
 
 import pytest
-
 from tribalmind.backboard.client import BackboardClient
 from tribalmind.config.settings import TribalSettings, clear_settings_cache
 from tribalmind.graph.state import ShellEvent

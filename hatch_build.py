@@ -32,4 +32,4 @@ class CustomBuildHook(BuildHookInterface):
         self.app.display_info("Building frontend...")
         subprocess.run([pnpm, "build"], cwd=ui_dir, check=True)
 
-        self.app.display_info("Frontend built → src/tribalmind/web/static/")
+        self.app.display_info("Frontend built → lib/tribalmind/web/static/")

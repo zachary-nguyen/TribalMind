@@ -111,7 +111,7 @@ ruff check src/ tests/
 ## Project Structure
 
 ```
-src/tribalmind/
+lib/tribalmind/
   cli/        CLI commands (Typer)
   config/     Settings (pydantic-settings + YAML) and keyring credentials
   backboard/  Async HTTP client for the Backboard API

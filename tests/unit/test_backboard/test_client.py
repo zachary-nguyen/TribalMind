@@ -2,10 +2,9 @@
 
 from __future__ import annotations
 
-import pytest
 import httpx
+import pytest
 import respx
-
 from tribalmind.backboard.client import BackboardClient, BackboardError
 
 
