@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.4.0 (2026-03-14)
+
+### Features
+
+- Add Backboard dashboard UI with assistants, threads, and memory views
+  ([`f37e539`](https://github.com/zachary-nguyen/TribalMind/commit/f37e5390fe6c8b466f59228498646dc1aa3ed384))
+
+
 ## v1.3.0 (2026-03-14)
 
 ### Features
