@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.6.1 (2026-03-15)
+
+### Bug Fixes
+
+- Mock set_credential in test_init_api_error for CI
+  ([`44847d0`](https://github.com/zachary-nguyen/TribalMind/commit/44847d06f339b01c2faf4d8f2aaedceee9727693))
+
+
 ## v1.6.0 (2026-03-15)
 
 ### Features
