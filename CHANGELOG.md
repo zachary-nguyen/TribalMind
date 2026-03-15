@@ -2,6 +2,28 @@
 
 <!-- version list -->
 
+## v2.1.0 (2026-03-15)
+
+### Bug Fixes
+
+- Auto-build frontend when `tribal ui` static assets are missing
+  ([`d9ecbc2`](https://github.com/zachary-nguyen/TribalMind/commit/d9ecbc2d1c94b84e33cbb308a4e1600aa12b36b8))
+
+- Include frontend static assets in wheel build
+  ([`1dfe084`](https://github.com/zachary-nguyen/TribalMind/commit/1dfe08451c1e3e236bec6ad0569a6aefd7100cfa))
+
+- Let PSR commit and tag the version bump locally
+  ([`315cafa`](https://github.com/zachary-nguyen/TribalMind/commit/315cafae9c06e7f52bbf12a9ee1b45161605ef89))
+
+- Use shell=True on Windows for subprocess calls to pnpm/npm
+  ([`08d96de`](https://github.com/zachary-nguyen/TribalMind/commit/08d96de2e87854b7431dabb673ec7b6546c2018d))
+
+### Features
+
+- Add cross-repo recall fallback to agent snippet prompt
+  ([`de17dfc`](https://github.com/zachary-nguyen/TribalMind/commit/de17dfc6476777094ad80f02c216a0463854a2a7))
+
+
 ## v2.0.0 (2026-03-15)
 
 ### Bug Fixes
