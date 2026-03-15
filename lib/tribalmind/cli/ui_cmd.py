@@ -81,7 +81,7 @@ def ui(
         console.print("  pip install 'tribalmind[ui]'")
         raise typer.Exit(1)
 
-    if not _STATIC_DIR.exists():
+    if not (_STATIC_DIR / "index.html").exists():
         if not _build_frontend():
             console.print("[red]Frontend assets not found.[/red]")
             console.print("Build manually: [cyan]cd ui && pnpm install && pnpm build[/cyan]")
