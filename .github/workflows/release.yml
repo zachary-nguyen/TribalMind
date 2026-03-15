@@ -54,10 +54,11 @@ jobs:
           echo "version=$NEXT" >> $GITHUB_OUTPUT
           echo "Next version: ${NEXT:-'(none — skipping release)'}"
 
-      # Update pyproject.toml + CHANGELOG.md but don't commit/tag yet
-      - name: Bump version files
+      # Bump version in pyproject.toml + CHANGELOG.md, commit, and tag —
+      # but don't push yet (we push after a successful publish).
+      - name: Bump, commit & tag
         if: steps.next.outputs.version != ''
-        run: semantic-release version --no-commit --no-tag --no-push --no-vcs-release
+        run: semantic-release version --no-push --no-vcs-release
 
       - name: Build frontend
         if: steps.next.outputs.version != ''
@@ -66,7 +67,6 @@ jobs:
 
       - name: Build wheel + sdist
         if: steps.next.outputs.version != ''
-        # hatch_build.py bundled the frontend into the wheel at this point
         run: hatch build
 
       - name: Publish to PyPI
@@ -75,19 +75,9 @@ jobs:
         with:
           skip-existing: true
 
-      # Commit, tag, and push — after a successful publish
-      - name: Commit and tag release
+      - name: Push release commit & tag
         if: steps.next.outputs.version != ''
-        run: |
-          git add pyproject.toml
-          [ -f CHANGELOG.md ] && git add CHANGELOG.md || true
-          if git diff --cached --quiet; then
-            echo "No version file changes to commit (already committed?). Skipping commit/tag/push."
-            exit 0
-          fi
-          git commit -m "chore: release v${{ steps.next.outputs.version }} [skip ci]"
-          git tag "v${{ steps.next.outputs.version }}"
-          git push origin master "v${{ steps.next.outputs.version }}"
+        run: git push origin master "v${{ steps.next.outputs.version }}"
 
       - name: Create GitHub release
         if: steps.next.outputs.version != ''
