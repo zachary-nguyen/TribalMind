@@ -35,6 +35,15 @@ Use `tribal recall` when:
 tribal recall --json "<describe what you need context on>"
 ```
 
+**Cross-repo recall:** If a local recall returns no relevant results, or if the \
+query references a name/project/term you don't recognize in this repo, \
+**automatically retry with `--all`** to search across all repos in the account. \
+Do NOT ask the user to tell you to do this — just do it.
+
+```bash
+tribal recall --all --json "<query>"
+```
+
 ### When to remember
 
 As you work, **proactively** store knowledge the team would benefit from — \
