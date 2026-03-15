@@ -39,6 +39,11 @@ dev = [
 [project.scripts]
 tribal = "tribalmind.cli.app:app"
 
+[tool.hatch.build]
+# The built React frontend is gitignored (output of `cd ui && pnpm build`)
+# but must be included in the wheel so `tribal ui` works from a pip install.
+artifacts = ["lib/tribalmind/web/static/"]
+
 [tool.hatch.build.targets.wheel]
 packages = ["lib/tribalmind"]
 
