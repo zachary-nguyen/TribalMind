@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-import shutil
 import subprocess
+import sys
 from pathlib import Path
 
 import typer
@@ -22,8 +22,21 @@ def _build_frontend() -> bool:
     if not _UI_SRC_DIR.exists():
         return False
 
-    pkg_manager = "pnpm" if shutil.which("pnpm") else "npm" if shutil.which("npm") else None
-    if pkg_manager is None:
+    # On Windows, node package managers are .cmd scripts that require shell=True
+    use_shell = sys.platform == "win32"
+
+    for pkg_manager in ("pnpm", "npm"):
+        try:
+            subprocess.run(
+                [pkg_manager, "--version"],
+                capture_output=True,
+                shell=use_shell,
+                check=True,
+            )
+            break
+        except (subprocess.CalledProcessError, FileNotFoundError):
+            continue
+    else:
         return False
 
     console.print(f"[yellow]Building frontend with {pkg_manager}…[/yellow]")
@@ -33,12 +46,14 @@ def _build_frontend() -> bool:
             cwd=str(_UI_SRC_DIR),
             check=True,
             capture_output=True,
+            shell=use_shell,
         )
         subprocess.run(
             [pkg_manager, "run", "build"],
             cwd=str(_UI_SRC_DIR),
             check=True,
             capture_output=True,
+            shell=use_shell,
         )
         console.print("[green]Frontend built successfully.[/green]")
         return True
