@@ -2,6 +2,24 @@
 
 <!-- version list -->
 
+## v2.0.0 (2026-03-15)
+
+### Bug Fixes
+
+- Mock set_credential in test_init_api_error for CI
+  ([`44847d0`](https://github.com/zachary-nguyen/TribalMind/commit/44847d06f339b01c2faf4d8f2aaedceee9727693))
+
+### Features
+
+- V2.0 stateless CLI architecture
+  ([`1da1cb0`](https://github.com/zachary-nguyen/TribalMind/commit/1da1cb01738fd69d2cfcb7a5db20d6060f8ae54c))
+
+### Breaking Changes
+
+- Removed daemon, graph, hooks, upstream modules and all associated CLI commands. The CLI is now
+  stateless — use `tribal remember` / `tribal recall` instead of the background agent.
+
+
 ## v1.6.0 (2026-03-15)
 
 ### Features
