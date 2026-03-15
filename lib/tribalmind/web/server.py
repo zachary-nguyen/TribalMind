@@ -1,28 +1,20 @@
-"""Lightweight FastAPI server for the TribalMind UI.
+"""FastAPI server for the TribalMind dashboard UI.
 
 Exposes:
-  GET /api/logs    — SSE stream of daemon log lines
-  GET /api/status  — daemon running status
-  /api/backboard/* — proxy to Backboard REST API
-  GET /           — serves the built React frontend (ui/dist/)
+  /api/backboard/* — proxy to Backboard REST API (assistants, memories, threads)
+  /api/status      — project configuration status
+  GET /            — serves the built React frontend (ui/dist/)
 """
 
 from __future__ import annotations
 
-import asyncio
-import json
-import logging
 from pathlib import Path
 from typing import Any
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse, StreamingResponse
+from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
-
-from tribalmind.config.settings import get_settings
-
-logger = logging.getLogger(__name__)
 
 app = FastAPI(title="TribalMind UI", docs_url=None, redoc_url=None)
 
@@ -37,7 +29,7 @@ app.add_middleware(
 # ── Backboard proxy helpers ──────────────────────────────────────────────────
 
 def _get_client():
-    """Lazy-create a BackboardClient (import here to avoid startup crash if no key)."""
+    """Lazy-create a BackboardClient."""
     from tribalmind.backboard.client import create_client
     return create_client()
 
@@ -155,66 +147,42 @@ async def proxy_create_thread(assistant_id: str):
     return await _proxy("POST", f"/assistants/{assistant_id}/threads")
 
 
-# ── Existing: Logs SSE + Status ──────────────────────────────────────────────
+# ── Activity log ─────────────────────────────────────────────────────────────
 
-async def _tail_log_file(history_lines: int = 200):
-    """Async generator that streams new lines from the daemon log file via SSE."""
-    settings = get_settings()
-    log_file = settings.log_file
+@app.get("/api/activity")
+async def get_activity(limit: int = 100, offset: int = 0):
+    """Return recent activity events (newest first)."""
+    from tribalmind.activity import read_activity
 
-    # Wait for log file to appear (daemon may not be started yet)
-    while not log_file.exists():
-        yield _sse({"type": "waiting", "message": "Waiting for daemon to start..."})
-        await asyncio.sleep(1.0)
-
-    with open(log_file, encoding="utf-8", errors="replace") as f:
-        # Send last N lines of history so the page isn't empty on load
-        all_lines = f.readlines()
-        for line in all_lines[-history_lines:]:
-            line = line.rstrip()
-            if line:
-                yield _sse({"type": "log", "line": line})
-
-        # Tail new lines as they arrive
-        while True:
-            line = f.readline()
-            if line:
-                line = line.rstrip()
-                if line:
-                    yield _sse({"type": "log", "line": line})
-            else:
-                await asyncio.sleep(0.1)
+    return read_activity(limit=limit, offset=offset)
 
 
-def _sse(payload: dict) -> str:
-    return f"data: {json.dumps(payload)}\n\n"
+@app.delete("/api/activity")
+async def delete_activity():
+    """Clear the activity log."""
+    from tribalmind.activity import clear_activity
+
+    deleted = clear_activity()
+    return {"deleted": deleted}
 
 
-@app.get("/api/logs")
-async def stream_logs(history: int = 200):
-    """SSE endpoint — connect once and receive log lines as they arrive."""
-    return StreamingResponse(
-        _tail_log_file(history_lines=max(1, min(history, 10000))),
-        media_type="text/event-stream",
-        headers={
-            "Cache-Control": "no-cache",
-            "X-Accel-Buffering": "no",
-            "Connection": "keep-alive",
-        },
-    )
-
+# ── Status ───────────────────────────────────────────────────────────────────
 
 @app.get("/api/status")
 async def get_status():
-    """Return whether the daemon process is currently running."""
-    from tribalmind.daemon.manager import is_running, read_pid
+    """Return project configuration status."""
+    from tribalmind.config.settings import get_settings
 
-    running = is_running()
-    pid = read_pid()
-    return {"running": running, "pid": pid}
+    settings = get_settings()
+    return {
+        "configured": bool(settings.project_assistant_id),
+        "project_root": str(settings.project_root),
+        "assistant_id": settings.project_assistant_id or "",
+    }
 
 
-# Serve built frontend — bundled inside the package at web/static/
+# ── Serve built frontend ────────────────────────────────────────────────────
+
 _dist = Path(__file__).parent / "static"
 if _dist.exists():
     app.mount("/", StaticFiles(directory=str(_dist), html=True), name="static")
@@ -239,7 +207,7 @@ else:
             "<p>Or for dev mode with hot reload, open "
             "<code>http://localhost:5173</code> after running:</p>"
             "<pre><code>cd ui &amp;&amp; pnpm dev</code></pre>"
-            "<p>The API is running — "
+            "<p>The API is running &mdash; "
             "<a href='/api/status' style='color:#7dd3fc'>/api/status</a>"
             " is live.</p>"
             "</div></body></html>"

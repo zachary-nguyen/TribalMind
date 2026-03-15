@@ -9,49 +9,49 @@ from tribalmind.config.settings import TribalSettings, clear_settings_cache
 
 
 class TestTribalSettings:
-    def test_defaults(self, monkeypatch):
+    def test_defaults(self, tmp_path, monkeypatch):
         monkeypatch.delenv("TRIBAL_BACKBOARD_API_KEY", raising=False)
+        monkeypatch.chdir(tmp_path)  # avoid local tribal.yaml
+        clear_settings_cache()
         settings = TribalSettings()
         assert settings.backboard_base_url == "https://app.backboard.io/api"
-        assert settings.daemon_host == "127.0.0.1"
-        assert settings.daemon_port == 7483
-        assert settings.team_sharing_enabled is False
         assert settings.llm_provider == "anthropic"
 
     def test_env_override(self, monkeypatch):
-        monkeypatch.setenv("TRIBAL_DAEMON_PORT", "9999")
         monkeypatch.setenv("TRIBAL_LLM_PROVIDER", "openai")
         settings = TribalSettings()
-        assert settings.daemon_port == 9999
         assert settings.llm_provider == "openai"
 
     def test_yaml_loading(self, tmp_path, monkeypatch):
-        config = {"daemon_port": 8888, "llm_provider": "google"}
+        config = {"llm_provider": "google", "model_name": "gemini-pro"}
         config_file = tmp_path / "tribal.yaml"
         config_file.write_text(yaml.dump(config))
         monkeypatch.chdir(tmp_path)
         clear_settings_cache()
         settings = TribalSettings()
-        assert settings.daemon_port == 8888
         assert settings.llm_provider == "google"
+        assert settings.model_name == "gemini-pro"
 
     def test_env_overrides_yaml(self, tmp_path, monkeypatch):
-        config = {"daemon_port": 8888}
+        config = {"llm_provider": "google"}
         config_file = tmp_path / "tribal.yaml"
         config_file.write_text(yaml.dump(config))
         monkeypatch.chdir(tmp_path)
-        monkeypatch.setenv("TRIBAL_DAEMON_PORT", "7777")
+        monkeypatch.setenv("TRIBAL_LLM_PROVIDER", "openai")
         settings = TribalSettings()
-        assert settings.daemon_port == 7777
+        assert settings.llm_provider == "openai"
 
-    def test_ignore_commands_default(self):
+    def test_extra_fields_ignored(self, tmp_path, monkeypatch):
+        """Old config files with removed fields should not break."""
+        config = {"daemon_port": 8888, "watch_dirs": ["/dev"], "llm_provider": "google"}
+        config_file = tmp_path / "tribal.yaml"
+        config_file.write_text(yaml.dump(config))
+        monkeypatch.chdir(tmp_path)
+        clear_settings_cache()
         settings = TribalSettings()
-        assert "cd" in settings.ignore_commands
-        assert "ls" in settings.ignore_commands
+        assert settings.llm_provider == "google"
 
     def test_properties(self):
         settings = TribalSettings()
         assert isinstance(settings.config_dir, Path)
         assert isinstance(settings.data_dir, Path)
-        assert isinstance(settings.runtime_dir, Path)
-        assert settings.pid_file.name == "daemon.pid"

@@ -93,6 +93,7 @@ class TribalSettings(BaseSettings):
     model_config = SettingsConfigDict(
         env_prefix="TRIBAL_",
         env_nested_delimiter="__",
+        extra="ignore",
     )
 
     # Backboard
@@ -102,37 +103,10 @@ class TribalSettings(BaseSettings):
     # Project
     project_root: Path = Field(default_factory=Path.cwd)
     project_assistant_id: str | None = None
-    org_assistant_id: str | None = None
 
     # LLM (via Backboard's multi-provider model selection)
     llm_provider: str = "anthropic"
     model_name: str = "claude-sonnet-4-20250514"
-
-    # Embedding (permanent per Backboard assistant - choose carefully)
-    embedding_provider: str = "openai"
-    embedding_model: str = "text-embedding-3-small"
-    embedding_dims: int = 1536
-
-    # Daemon
-    daemon_host: str = "127.0.0.1"
-    daemon_port: int = 7483
-
-    # GitHub (optional upstream monitoring)
-    github_token: str = ""
-
-    # Team sharing
-    team_sharing_enabled: bool = False
-
-    # Promotion
-    trust_threshold: float = 3.0  # trust_score needed to promote local -> org
-
-    # Ignore patterns for shell monitoring
-    ignore_commands: list[str] = Field(
-        default_factory=lambda: ["cd", "ls", "pwd", "clear", "cls", "echo", "cat", "less", "more"]
-    )
-
-    # Directory filter — if non-empty, only monitor commands run inside these paths
-    watch_dirs: list[Path] = Field(default_factory=list)
 
     @model_validator(mode="before")
     @classmethod
@@ -155,20 +129,6 @@ class TribalSettings(BaseSettings):
         """User data directory for TribalMind."""
         return Path(platformdirs.user_data_dir("tribalmind"))
 
-    @property
-    def runtime_dir(self) -> Path:
-        """Runtime directory (PID files, sockets)."""
-        return Path(platformdirs.user_runtime_dir("tribalmind"))
-
-    @property
-    def pid_file(self) -> Path:
-        """Path to daemon PID file."""
-        return self.runtime_dir / "daemon.pid"
-
-    @property
-    def log_file(self) -> Path:
-        """Path to daemon log file."""
-        return self.data_dir / "daemon.log"
 
 
 @lru_cache(maxsize=1)

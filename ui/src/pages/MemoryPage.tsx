@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from "react"
 import { useSearchParams } from "react-router-dom"
-import { Brain, Trash2, RefreshCw, Search, Tag, Package, Wrench, AlertTriangle, XCircle } from "lucide-react"
+import { Brain, Trash2, RefreshCw, Search, Tag, Bookmark, XCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import {
@@ -13,29 +13,45 @@ import {
   clearMemories,
 } from "@/lib/api"
 
-/** Parse the TribalMind memory encoding format. */
-function parseTags(content: string) {
+/** Parse the TribalMind JSON memory format, with legacy fallback. */
+function parseMemory(content: string) {
+  // Try JSON first (new format)
+  try {
+    const data = JSON.parse(content)
+    if (typeof data === "object" && data !== null) {
+      return {
+        category: data.category ?? "",
+        subject: data.subject ?? data.package ?? "",
+        content: data.content ?? data.fix_text ?? data.error_text ?? "",
+      }
+    }
+  } catch {
+    // Fall back to legacy pipe-delimited format
+  }
+
   const catMatch = content.match(/^\[(\w+)\]/)
   const category = catMatch?.[1] ?? ""
   const pkg = content.match(/package=([\w.\-]+)/)?.[1] ?? ""
-  const confidence = content.match(/confidence=([\d.]+)/)?.[1] ?? ""
-  const trust = content.match(/trust=([\d.]+)/)?.[1] ?? ""
   const fixMatch = content.match(/fix:\s*(.+?)(?:\s*\||$)/)
   const fix = fixMatch?.[1]?.trim() ?? ""
-
-  // Error text is between first and second pipe
   const pipes = content.split("|")
   const errorText = pipes.length >= 2 ? pipes[1].trim() : ""
 
-  return { category, pkg, confidence, trust, fix, errorText }
+  return {
+    category,
+    subject: pkg,
+    content: fix || errorText || content,
+  }
 }
 
 function categoryVariant(cat: string) {
   switch (cat) {
-    case "error": return "error"
-    case "fix": return "success"
-    case "context": return "info"
-    case "upstream": return "warning"
+    case "fix": return "error"
+    case "convention": return "info"
+    case "architecture": return "graph"
+    case "context": return "secondary"
+    case "decision": return "warning"
+    case "tip": return "success"
     default: return "default"
   }
 }
@@ -124,7 +140,7 @@ export default function MemoryPage() {
   const categories = useMemo(() => {
     const cats = new Set<string>()
     memories.forEach((m) => {
-      const { category } = parseTags(m.content)
+      const { category } = parseMemory(m.content)
       if (category) cats.add(category)
     })
     return ["ALL", ...Array.from(cats).sort()]
@@ -132,7 +148,7 @@ export default function MemoryPage() {
 
   const filtered = useMemo(() => {
     if (filterCategory === "ALL") return memories
-    return memories.filter((m) => parseTags(m.content).category === filterCategory)
+    return memories.filter((m) => parseMemory(m.content).category === filterCategory)
   }, [memories, filterCategory])
 
   return (
@@ -217,6 +233,9 @@ export default function MemoryPage() {
           <Button size="sm" variant="ghost" type="submit" className="ml-1" disabled={!query.trim()}>
             Search
           </Button>
+          <span className="ml-1 text-[10px] text-muted-foreground/60" title="Semantic search uses a RAG query — each search is a billed Backboard operation">
+            (billed per query)
+          </span>
         </form>
 
         {isSearchMode && (
@@ -266,7 +285,7 @@ export default function MemoryPage() {
           <div className="divide-y divide-border">
             {filtered.map((m) => {
               const id = m.memory_id ?? m.id ?? ""
-              const { category, pkg, confidence, trust, fix, errorText } = parseTags(m.content)
+              const parsed = parseMemory(m.content)
               const score = m.score
 
               return (
@@ -278,26 +297,16 @@ export default function MemoryPage() {
                     <div className="flex-1 min-w-0">
                       {/* Tags row */}
                       <div className="flex flex-wrap items-center gap-1.5 mb-1.5">
-                        {category && (
-                          <Badge variant={categoryVariant(category) as any}>
+                        {parsed.category && (
+                          <Badge variant={categoryVariant(parsed.category) as any}>
                             <Tag className="mr-1 h-2.5 w-2.5" />
-                            {category}
+                            {parsed.category}
                           </Badge>
                         )}
-                        {pkg && (
+                        {parsed.subject && (
                           <Badge variant="secondary">
-                            <Package className="mr-1 h-2.5 w-2.5" />
-                            {pkg}
-                          </Badge>
-                        )}
-                        {confidence && (
-                          <Badge variant={parseFloat(confidence) >= 0.7 ? "success" : "warning"}>
-                            {Math.round(parseFloat(confidence) * 100)}% conf
-                          </Badge>
-                        )}
-                        {trust && (
-                          <Badge variant="info">
-                            trust {trust}
+                            <Bookmark className="mr-1 h-2.5 w-2.5" />
+                            {parsed.subject}
                           </Badge>
                         )}
                         {score != null && (
@@ -307,20 +316,11 @@ export default function MemoryPage() {
                         )}
                       </div>
 
-                      {/* Error text */}
-                      {errorText && (
-                        <div className="flex items-start gap-1.5 mb-1">
-                          <AlertTriangle className="h-3.5 w-3.5 text-red-400 mt-0.5 shrink-0" />
-                          <span className="text-xs text-red-300 font-mono">{errorText}</span>
-                        </div>
-                      )}
-
-                      {/* Fix text */}
-                      {fix && (
-                        <div className="flex items-start gap-1.5 mb-1">
-                          <Wrench className="h-3.5 w-3.5 text-emerald-400 mt-0.5 shrink-0" />
-                          <span className="text-xs text-emerald-300 font-mono">{fix}</span>
-                        </div>
+                      {/* Content */}
+                      {parsed.content && (
+                        <p className="text-xs text-foreground/90 leading-relaxed">
+                          {parsed.content}
+                        </p>
                       )}
 
                       {/* Raw content (collapsed) */}

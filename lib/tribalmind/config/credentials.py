@@ -13,7 +13,6 @@ SERVICE_PREFIX = "tribalmind"
 
 # Known credential keys
 BACKBOARD_API_KEY = "backboard_api_key"
-GITHUB_TOKEN = "github_token"
 
 console = Console(stderr=True)
 
@@ -24,12 +23,13 @@ def _service_name(key: str) -> str:
 
 def set_credential(key: str, value: str) -> None:
     """Store a credential in the system keyring."""
-    keyring.set_password(_service_name(key), key, value)
+    keyring.set_password(_service_name(key), key, value.strip())
 
 
 def get_credential(key: str) -> str | None:
     """Retrieve a credential from the system keyring."""
-    return keyring.get_password(_service_name(key), key)
+    value = keyring.get_password(_service_name(key), key)
+    return value.strip() if value else value
 
 
 def delete_credential(key: str) -> None:
@@ -53,17 +53,6 @@ def get_backboard_api_key() -> str | None:
     settings = get_settings()
     return settings.backboard_api_key or None
 
-
-def get_github_token() -> str | None:
-    """Get the GitHub token, preferring keyring over config/env."""
-    from tribalmind.config.settings import get_settings
-
-    key = get_credential(GITHUB_TOKEN)
-    if key:
-        return key
-
-    settings = get_settings()
-    return settings.github_token or None
 
 
 def require_backboard_api_key() -> str:

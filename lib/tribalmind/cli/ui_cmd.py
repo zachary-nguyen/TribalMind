@@ -1,4 +1,4 @@
-"""CLI command for launching the TribalMind live log viewer UI."""
+"""CLI command for launching the TribalMind dashboard UI."""
 
 from __future__ import annotations
 
@@ -16,19 +16,23 @@ def ui(
         False, "--no-browser", help="Don't open a browser automatically."
     ),
 ) -> None:
-    """Launch the live log viewer UI in your browser."""
+    """Launch the TribalMind dashboard in your browser.
+
+    Browse assistants, memories, and threads via a web interface backed
+    by the Backboard API.
+    """
     try:
         import uvicorn  # noqa: F401
     except ImportError:
         console.print("[red]Web UI requires extra dependencies:[/red]")
-        console.print("  pip install 'tribalmind[[ui]]'")
+        console.print("  pip install 'tribalmind[ui]'")
         raise typer.Exit(1)
 
     import threading
     import webbrowser
 
     url = f"http://localhost:{port}"
-    console.print(f"[green]TribalMind UI ->[/green] {url}")
+    console.print(f"[green]TribalMind dashboard ->[/green] {url}")
     console.print("[dim]Press Ctrl+C to stop.[/dim]")
 
     if not no_browser:

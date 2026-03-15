@@ -6,38 +6,10 @@
 # backboard_base_url: "https://app.backboard.io/api"
 # API key should be set via: tribal config set-secret backboard-api-key
 
-# LLM provider and model (via Backboard's multi-provider catalog)
+# LLM provider and model (used for parsing memories via Backboard)
+# Supported providers: anthropic, openai, google
 llm_provider: "anthropic"
 model_name: "claude-sonnet-4-20250514"
 
-# Embedding model (permanent per Backboard assistant - choose carefully)
-embedding_provider: "openai"
-embedding_model: "text-embedding-3-small"
-embedding_dims: 1536
-
-# Daemon settings
-daemon_host: "127.0.0.1"
-daemon_port: 7483
-
-# Team sharing (enable with: tribal enable-team-sharing)
-team_sharing_enabled: false
-# org_assistant_id: "your-org-assistant-id"
-
-# Commands to ignore (won't trigger error analysis)
-ignore_commands:
-  - cd
-  - ls
-  - pwd
-  - clear
-  - cls
-  - echo
-  - cat
-  - less
-  - more
-
-# Directory filter — only monitor commands run inside these paths.
-# Required: if empty, no commands are monitored.
-# Manage with: tribal watch add / tribal watch remove / tribal watch list
-# watch_dirs:
-#   - /Users/you/dev/my-project
-#   - /Users/you/dev/another-project
+# Project assistant ID (set automatically by `tribal init`)
+# project_assistant_id: "your-assistant-id"

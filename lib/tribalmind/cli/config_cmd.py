@@ -11,7 +11,6 @@ from rich.table import Table
 
 from tribalmind.config.credentials import (
     BACKBOARD_API_KEY,
-    GITHUB_TOKEN,
     get_credential,
     set_credential,
 )
@@ -22,7 +21,6 @@ console = Console()
 
 SECRET_KEYS = {
     "backboard-api-key": BACKBOARD_API_KEY,
-    "github-token": GITHUB_TOKEN,
 }
 
 # Settings fields that can be modified via `tribal config set`
@@ -30,16 +28,10 @@ CONFIGURABLE_KEYS = {
     "backboard-base-url": "backboard_base_url",
     "llm-provider": "llm_provider",
     "model-name": "model_name",
-    "embedding-provider": "embedding_provider",
-    "embedding-model": "embedding_model",
-    "daemon-host": "daemon_host",
-    "daemon-port": "daemon_port",
-    "team-sharing-enabled": "team_sharing_enabled",
-    "org-assistant-id": "org_assistant_id",
     "project-assistant-id": "project_assistant_id",
 }
 
-REDACTED_FIELDS = {"backboard_api_key", "github_token"}
+REDACTED_FIELDS = {"backboard_api_key"}
 
 
 def _get_config_path() -> Path:
@@ -232,10 +224,10 @@ def config_debug_key() -> None:
         console.print("[red]No API key in keyring.[/red]")
         return
 
-    console.print(f"Length:  {len(raw)}")
-    console.print(f"Repr:   {repr(raw[:20])}")
+    console.print(f"Length:  {len(raw)} chars")
     if len(raw) >= 8:
-        console.print(f"Preview: {raw[:4]}{'•' * 8}{raw[-4:]}")
+        console.print(f"Key:    {raw[:6]}{'•' * 12}{raw[-6:]}")
+        console.print("[green]Key looks valid.[/green]")
     else:
         console.print(f"[red]Key is too short ({len(raw)} chars) — likely corrupted.[/red]")
         console.print(

@@ -1,4 +1,4 @@
-"""TribalMind - Federated Developer Knowledge Agent."""
+"""TribalMind - Shared memory for AI development agents."""
 
 from __future__ import annotations
 

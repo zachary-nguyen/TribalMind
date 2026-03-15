@@ -57,6 +57,10 @@ ui/.pnpm-store/
 lib/tribalmind/web/static/
 
 .claude/
+.cursorrules
+.windsurfrules
+AGENTS.md
+CLAUDE.md
 
 # CI / workflows
 .github/.tmp/

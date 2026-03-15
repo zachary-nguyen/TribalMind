@@ -8,8 +8,8 @@ from tribalmind import __version__
 
 app = typer.Typer(
     name="tribal",
-    help="TribalMind - Federated Developer Knowledge Agent",
-    no_args_is_help=True,
+    help="TribalMind - Shared memory for AI development agents",
+    invoke_without_command=True,
 )
 
 
@@ -27,22 +27,26 @@ def main(
         is_eager=True,
     ),
 ) -> None:
-    """TribalMind - Federated Developer Knowledge Agent.
+    """TribalMind - Shared memory for AI development agents.
 
-    Observes terminal activity, correlates errors with upstream library health,
-    and shares validated fixes across your team.
+    Remember, recall, and share knowledge across projects and teams.
+    Any agent that can run shell commands can use this.
     """
-    # Show logo when displaying main help (no subcommand) or for install
     if ctx.invoked_subcommand is None:
         from tribalmind.cli.banner import print_banner  # noqa: E402
 
         print_banner()
+        # Show usage help after the banner
+        import click
+        click.echo(ctx.get_help())
+        raise typer.Exit()
     else:
-        # Prompt to upgrade if running an old version (skip when already running upgrade)
         if ctx.invoked_subcommand != "upgrade":
             from tribalmind.cli.version_check import check_and_notify  # noqa: E402
 
             check_and_notify()
+
+
 
 
 # Register subcommands
@@ -50,31 +54,41 @@ from tribalmind.cli.config_cmd import config_app  # noqa: E402
 
 app.add_typer(config_app, name="config", help="Manage TribalMind configuration.")
 
-from tribalmind.cli.daemon_cmd import start, status, stop  # noqa: E402
+from tribalmind.cli.init_cmd import init  # noqa: E402
 
-app.command()(start)
-app.command()(stop)
+app.command()(init)
+
+from tribalmind.cli.remember_cmd import remember  # noqa: E402
+
+app.command()(remember)
+
+from tribalmind.cli.recall_cmd import recall  # noqa: E402
+
+app.command()(recall)
+
+from tribalmind.cli.forget_cmd import forget  # noqa: E402
+
+app.command()(forget)
+
+from tribalmind.cli.status_cmd import status  # noqa: E402
+
 app.command()(status)
 
-from tribalmind.cli.install import install  # noqa: E402
+from tribalmind.cli.activity_cmd import activity  # noqa: E402
 
-app.command()(install)
-
-from tribalmind.cli.team import enable_team_sharing  # noqa: E402
-
-app.command(name="enable-team-sharing")(enable_team_sharing)
+app.command()(activity)
 
 from tribalmind.cli.ui_cmd import ui  # noqa: E402
 
 app.command()(ui)
 
-from tribalmind.cli.watch_cmd import watch_app  # noqa: E402
-
-app.add_typer(watch_app, name="watch", help="Manage watched directories.")
-
 from tribalmind.cli.upgrade_cmd import upgrade  # noqa: E402
 
 app.command()(upgrade)
+
+from tribalmind.cli.agents_cmd import setup_agents  # noqa: E402
+
+app.command("setup-agents")(setup_agents)
 
 
 if __name__ == "__main__":

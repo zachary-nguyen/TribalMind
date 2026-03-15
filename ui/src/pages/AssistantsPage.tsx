@@ -84,7 +84,7 @@ export default function AssistantsPage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-medium truncate">{a.name || id}</span>
-                      {a.name?.startsWith("tribalmind-") && (
+                      {a.name?.startsWith("tribal-") && (
                         <Badge variant="graph">project</Badge>
                       )}
                     </div>
@@ -108,7 +108,7 @@ export default function AssistantsPage() {
                     size="sm"
                     variant="ghost"
                     className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-violet-400"
-                    onClick={() => navigate(`/memory?assistant=${id}`)}
+                    onClick={() => navigate(`/?assistant=${id}`)}
                     title="View memories"
                   >
                     <Brain className="h-3.5 w-3.5" />

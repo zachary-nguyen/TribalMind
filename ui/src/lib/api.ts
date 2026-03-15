@@ -75,37 +75,3 @@ export function clearMemories(assistantId: string): Promise<{ deleted: number }>
   return request<{ deleted: number }>("DELETE", `/assistants/${assistantId}/memories`)
 }
 
-// ── Threads ─────────────────────────────────────────────────────────────────
-
-export interface Thread {
-  thread_id?: string
-  id?: string
-  assistant_id?: string
-  created_at?: string
-  updated_at?: string
-  messages?: ThreadMessage[]
-  [key: string]: unknown
-}
-
-export interface ThreadMessage {
-  role: string
-  content: string
-  created_at?: string
-  [key: string]: unknown
-}
-
-export function listThreads(): Promise<Thread[]> {
-  return request<Thread[]>("GET", "/threads")
-}
-
-export function getThread(id: string): Promise<Thread> {
-  return request<Thread>("GET", `/threads/${id}`)
-}
-
-export function deleteThread(id: string): Promise<unknown> {
-  return request("DELETE", `/threads/${id}`)
-}
-
-export function createThread(assistantId: string): Promise<Thread> {
-  return request<Thread>("POST", `/assistants/${assistantId}/threads`)
-}
