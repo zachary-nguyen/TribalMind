@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "tribalmind"
-version = "2.0.0"
+version = "1.6.1"
 description = "Shared memory for AI development agents - remember, recall, and share knowledge across projects and teams"
 readme = { file = "README.md", content-type = "text/markdown" }
 license = "MIT"
