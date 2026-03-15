@@ -19,9 +19,14 @@ for shared knowledge persistence across agents and team members.
 
 ### When to recall
 
-Do NOT search memory on every task. Use `tribal recall` when appropriate:
+**IMPORTANT: When investigating issues, debugging, or answering "why does X \
+happen" questions, ALWAYS run `tribal recall` FIRST before exploring the \
+codebase or spawning exploration agents.** The answer is often already in \
+shared memory and skipping this step wastes significant time.
+
+Use `tribal recall` when:
+- You're investigating an issue or unexpected behavior (check memory FIRST)
 - You need context about the project or area you're working in
-- You hit a confusing error or unexpected behavior
 - You're stuck or unsure about the right approach
 - You need context about a past decision, convention, or known issue
 - You're working in an unfamiliar part of the codebase
@@ -35,13 +40,19 @@ tribal recall --json "<describe what you need context on>"
 As you work, **proactively** store knowledge the team would benefit from — \
 don't wait until the end of a task or for the user to ask.
 
-**Good things to remember:**
-- Non-obvious fixes, workarounds, or gotchas
-- Patterns and conventions discovered in the code
-- Important decisions and the reasoning behind them
-- How modules connect and why things are built a certain way
-- Environment or config quirks
-- Surprising behavior found during exploration or code review
+**IMPORTANT: After completing any change, immediately ask yourself: "Would \
+this knowledge help a teammate (or future me) avoid confusion or save time?" \
+If yes, run `tribal remember` right away as part of completing the task — do \
+NOT wait for the user to remind you.**
+
+**Always remember when:**
+- You change a config value and the user explains *why* (e.g. setting a flag \
+to preserve data)
+- You discover or apply a non-obvious fix, workaround, or gotcha
+- The user shares reasoning behind a decision or convention
+- You learn how modules connect or why things are built a certain way
+- You encounter environment, config, or setup quirks
+- You find surprising behavior during exploration or code review
 
 **Do NOT remember** trivial changes, obvious fixes, or things already clear \
 from the code itself.
