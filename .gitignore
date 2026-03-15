@@ -54,6 +54,7 @@ Thumbs.db
 # Frontend
 ui/node_modules/
 ui/.pnpm-store/
+ui/.vite/
 lib/tribalmind/web/static/
 
 .claude/
