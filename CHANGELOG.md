@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v2.1.1 (2026-03-15)
+
+### Bug Fixes
+
+- Check for index.html instead of just static dir existence
+  ([`9ca17d6`](https://github.com/zachary-nguyen/TribalMind/commit/9ca17d69b893be47a56cb2b08765172502071beb))
+
+
 ## v2.1.0 (2026-03-15)
 
 ### Bug Fixes
