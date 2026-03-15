@@ -2,12 +2,50 @@
 
 from __future__ import annotations
 
+import shutil
+import subprocess
+from pathlib import Path
+
 import typer
 from rich.console import Console
 
 console = Console()
 
 UI_PORT = 7484
+
+_STATIC_DIR = Path(__file__).resolve().parent.parent / "web" / "static"
+_UI_SRC_DIR = Path(__file__).resolve().parent.parent.parent.parent / "ui"
+
+
+def _build_frontend() -> bool:
+    """Try to build the React frontend. Returns True on success."""
+    if not _UI_SRC_DIR.exists():
+        return False
+
+    pkg_manager = "pnpm" if shutil.which("pnpm") else "npm" if shutil.which("npm") else None
+    if pkg_manager is None:
+        return False
+
+    console.print(f"[yellow]Building frontend with {pkg_manager}…[/yellow]")
+    try:
+        subprocess.run(
+            [pkg_manager, "install"],
+            cwd=str(_UI_SRC_DIR),
+            check=True,
+            capture_output=True,
+        )
+        subprocess.run(
+            [pkg_manager, "run", "build"],
+            cwd=str(_UI_SRC_DIR),
+            check=True,
+            capture_output=True,
+        )
+        console.print("[green]Frontend built successfully.[/green]")
+        return True
+    except subprocess.CalledProcessError as exc:
+        stderr = exc.stderr.decode() if exc.stderr else ""
+        console.print(f"[red]Frontend build failed:[/red] {stderr[:500]}")
+        return False
 
 
 def ui(
@@ -27,6 +65,12 @@ def ui(
         console.print("[red]Web UI requires extra dependencies:[/red]")
         console.print("  pip install 'tribalmind[ui]'")
         raise typer.Exit(1)
+
+    if not _STATIC_DIR.exists():
+        if not _build_frontend():
+            console.print("[red]Frontend assets not found.[/red]")
+            console.print("Build manually: [cyan]cd ui && pnpm install && pnpm build[/cyan]")
+            raise typer.Exit(1)
 
     import threading
     import webbrowser
