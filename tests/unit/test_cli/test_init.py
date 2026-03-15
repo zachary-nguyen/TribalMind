@@ -40,7 +40,8 @@ class TestInitCommand:
         mock_set.assert_called_once()
 
     @patch("tribalmind.cli.init_cmd._setup_assistant", new_callable=AsyncMock)
-    def test_init_api_error(self, mock_setup):
+    @patch("tribalmind.config.credentials.set_credential")
+    def test_init_api_error(self, mock_set, mock_setup):
         from tribalmind.backboard.client import BackboardError
         mock_setup.side_effect = BackboardError(401, "Invalid API key")
 
