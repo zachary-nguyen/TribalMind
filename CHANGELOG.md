@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v2.3.1 (2026-03-16)
+
+### Bug Fixes
+
+- Gracefully handle missing keyring backend on Linux
+  ([`f2302ea`](https://github.com/zachary-nguyen/TribalMind/commit/f2302ea1041d173105495dce77cb70ddf54a42e8))
+
+
 ## v2.3.0 (2026-03-16)
 
 ### Features
