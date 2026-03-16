@@ -44,6 +44,7 @@ tribal.yaml
 *.swp
 *.swo
 *~
+.cursor
 
 # OS
 .DS_Store
