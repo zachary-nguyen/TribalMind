@@ -236,8 +236,8 @@ def init(
 
         if confirm("  Set up agent integration files?", default=True):
             from tribalmind.cli.agents_cmd import (
-                AGENTS,
                 AGENT_SNIPPETS,
+                AGENTS,
                 _detect_agents,
                 _inject_snippet,
             )
