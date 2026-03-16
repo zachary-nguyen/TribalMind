@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v2.3.0 (2026-03-16)
+
+### Features
+
+- Move project config to .tribal/config.yaml and auto-gitignore
+  ([`c647f6f`](https://github.com/zachary-nguyen/TribalMind/commit/c647f6f73c289e191982b63109b361c27ef2c11e))
+
+
 ## v2.2.1 (2026-03-16)
 
 ### Bug Fixes
