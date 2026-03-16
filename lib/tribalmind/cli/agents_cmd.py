@@ -9,14 +9,9 @@ from rich.console import Console
 
 console = Console()
 
-# ── Agent definitions ────────────────────────────────────────────────────────
+# ── Shared building blocks ──────────────────────────────────────────────────
 
-TRIBAL_SNIPPET = """\
-## TribalMind — Project Memory
-
-This project uses [TribalMind](https://github.com/zachary-nguyen/TribalMind) \
-for shared knowledge persistence across agents and team members.
-
+_RECALL_SECTION = """\
 ### When to recall
 
 **IMPORTANT: When investigating issues, debugging, or answering "why does X \
@@ -42,8 +37,9 @@ Do NOT ask the user to tell you to do this — just do it.
 
 ```bash
 tribal recall --all --json "<query>"
-```
+```"""
 
+_REMEMBER_SECTION = """\
 ### When to remember
 
 As you work, **proactively** store knowledge the team would benefit from — \
@@ -71,41 +67,116 @@ tribal remember "<what you learned — be specific and include context>"
 ```
 
 When you store a memory, briefly tell the user what was saved (e.g. "Saved to \
-project memory: <summary>").
+project memory: <summary>")."""
 
-### Reference
+_REFERENCE_SECTION = """\
+### Available commands
 
-- `--json` — structured output for programmatic use
-- `--list` / `-l` — browse all memories without a search query (no cost)
-- `--all` / `-a` — search across all repos in the account (cross-repo)
-- Pipe via stdin: `echo "insight" | tribal remember`
-"""
+| Command | Description |
+|---------|-------------|
+| `tribal remember "<text>"` | Store knowledge to project memory |
+| `tribal recall "<query>"` | Search memory by semantic similarity |
+| `tribal forget "<query>"` | Find and delete outdated memories |
+| `tribal status` | Show project status and memory stats |
+| `tribal recall --list` | Browse all memories (no search query, no cost) |
+| `tribal recall --all "<query>"` | Search across all repos in the account |
+| `tribal forget --id <id> --yes` | Delete a specific memory by ID |
+| `tribal forget --all --yes` | Clear all memories |
+
+All commands support `--json` / `-j` for structured output.
+Pipe via stdin: `echo "insight" | tribal remember`"""
+
+# ── Provider-specific snippets ──────────────────────────────────────────────
+
+SNIPPET_CLAUDE_CODE = f"""\
+## TribalMind — Project Memory
+
+This project uses [TribalMind](https://github.com/zachary-nguyen/TribalMind) \
+for shared knowledge persistence across agents and team members.
+
+### IMPORTANT: Dual-save rule
+
+You have a built-in auto-memory system (files under `~/.claude/`). TribalMind \
+is the **shared team memory** that all agents and team members can access. \
+**Whenever you write to your native auto-memory (`~/.claude/`), you MUST also \
+run `tribal remember` with the same insight in the same step.** Do not treat \
+these as separate tasks — do both together before moving on. This also applies \
+in reverse: if you run `tribal remember`, save the same knowledge to local \
+memory too.
+
+{_RECALL_SECTION}
+
+{_REMEMBER_SECTION}
+
+{_REFERENCE_SECTION}"""
+
+SNIPPET_DEFAULT = f"""\
+## TribalMind — Project Memory
+
+This project uses [TribalMind](https://github.com/zachary-nguyen/TribalMind) \
+for shared knowledge persistence across agents and team members.
+
+You do not have a built-in persistent memory system. **TribalMind is your \
+memory — use it to persist and retrieve knowledge across sessions.**
+
+{_RECALL_SECTION}
+
+{_REMEMBER_SECTION}
+
+{_REFERENCE_SECTION}"""
+
+AGENT_SNIPPETS: dict[str, str] = {
+    "claude-code": SNIPPET_CLAUDE_CODE,
+    "default": SNIPPET_DEFAULT,
+}
+
+# ── Agent definitions ────────────────────────────────────────────────────────
 
 AGENTS: dict[str, dict] = {
+    # ── Cross-agent standard (Cursor, Windsurf, VSCode Copilot, Claude Code) ──
+    "AGENTS.md": {
+        "label": "Cross-agent standard (Cursor, Windsurf, Copilot, Codex, Claude Code)",
+        "path": "AGENTS.md",
+        "section_marker": "## TribalMind",
+        "snippet_key": "default",
+    },
+    # ── Claude Code specific ─────────────────────────────────────────────────
     "CLAUDE.md": {
-        "label": "Claude Code",
+        "label": "Claude Code (root)",
         "path": "CLAUDE.md",
         "section_marker": "## TribalMind",
+        "snippet_key": "claude-code",
+    },
+    ".claude/CLAUDE.md": {
+        "label": "Claude Code (repo)",
+        "path": ".claude/CLAUDE.md",
+        "section_marker": "## TribalMind",
+        "snippet_key": "claude-code",
+    },
+    # ── Provider-specific (legacy, still supported) ──────────────────────────
+    ".cursor/rules/tribalmind.md": {
+        "label": "Cursor (project rules)",
+        "path": ".cursor/rules/tribalmind.md",
+        "section_marker": "## TribalMind",
+        "snippet_key": "default",
     },
     ".cursorrules": {
-        "label": "Cursor",
+        "label": "Cursor (legacy)",
         "path": ".cursorrules",
         "section_marker": "## TribalMind",
+        "snippet_key": "default",
     },
     ".windsurfrules": {
-        "label": "Windsurf",
+        "label": "Windsurf (legacy)",
         "path": ".windsurfrules",
         "section_marker": "## TribalMind",
+        "snippet_key": "default",
     },
     ".github/copilot-instructions.md": {
         "label": "GitHub Copilot",
         "path": ".github/copilot-instructions.md",
         "section_marker": "## TribalMind",
-    },
-    "AGENTS.md": {
-        "label": "Generic (AGENTS.md)",
-        "path": "AGENTS.md",
-        "section_marker": "## TribalMind",
+        "snippet_key": "default",
     },
 }
 
@@ -206,6 +277,10 @@ def setup_agents(
     Writes a TribalMind usage snippet into agent instruction files (CLAUDE.md,
     .cursorrules, etc.) so agents automatically recall and remember knowledge.
 
+    Each agent provider receives a tailored prompt — for example, Claude Code
+    is told to use tribal alongside its native memory, while other providers
+    are told tribal IS their memory system.
+
     \b
     Examples:
         tribal setup-agents                         # Auto-detect or prompt
@@ -243,38 +318,32 @@ def setup_agents(
             console.print(f"[dim]Detected existing agent files:[/dim] {labels}")
             targets = detected
         else:
-            # Nothing detected — ask which to create
-            console.print("[bold]Which agent config files would you like to create?[/bold]\n")
-            for i, (key, info) in enumerate(AGENTS.items(), 1):
-                console.print(f"  [#a78bfa]{i}.[/#a78bfa] {key}  — {info['label']}")
-            console.print()
-            choices = typer.prompt(
-                "Enter numbers separated by commas (e.g. 1,2), or 'all'",
-                default="1",
-            )
-            if choices.strip().lower() == "all":
-                targets = list(AGENTS.keys())
-            else:
-                keys_list = list(AGENTS.keys())
-                targets = []
-                for part in choices.split(","):
-                    part = part.strip()
-                    if part.isdigit():
-                        idx = int(part) - 1
-                        if 0 <= idx < len(keys_list):
-                            targets.append(keys_list[idx])
-                    elif part in AGENTS:
-                        targets.append(part)
-                if not targets:
-                    console.print("[red]No valid selections.[/red]")
-                    raise typer.Exit(1)
+            # Nothing detected — interactive checkbox picker
+            from tribalmind.cli.prompts import checkbox
 
-    # Write snippets
+            agent_choices = [
+                (f"{key}  — {info['label']}", key, key == "AGENTS.md")
+                for key, info in AGENTS.items()
+            ]
+            selected = checkbox(
+                "Which agent config files would you like to create?",
+                choices=agent_choices,
+            )
+
+            if selected is None:
+                raise typer.Exit()
+            targets = selected
+            if not targets:
+                console.print("[red]No valid selections.[/red]")
+                raise typer.Exit(1)
+
+    # Write provider-specific snippets
     console.print()
     for key in targets:
         info = AGENTS[key]
         file_path = root / info["path"]
-        result = _inject_snippet(file_path, TRIBAL_SNIPPET, info["section_marker"])
+        snippet = AGENT_SNIPPETS[info["snippet_key"]]
+        result = _inject_snippet(file_path, snippet, info["section_marker"])
         if result == "created":
             console.print(f"  [green]created[/green]  {info['path']}  ({info['label']})")
         elif result == "updated":
