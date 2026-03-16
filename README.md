@@ -12,6 +12,7 @@
   <a href="https://pypi.org/project/tribalmind/"><img src="https://img.shields.io/pypi/v/tribalmind" alt="PyPI"></a>
   <a href="https://pypi.org/project/tribalmind/"><img src="https://img.shields.io/pypi/pyversions/tribalmind" alt="Python"></a>
   <a href="https://github.com/zachary-nguyen/TribalMind/blob/master/LICENSE"><img src="https://img.shields.io/github/license/zachary-nguyen/TribalMind" alt="License"></a>
+  <a href="https://tribalmind.dev/docs/getting-started"><img src="https://img.shields.io/badge/docs-tribalmind.dev-6366f1" alt="Docs"></a>
 </p>
 
 ---
