@@ -24,6 +24,24 @@ def _find_git_root() -> Path | None:
     return None
 
 
+def _ensure_gitignore(root: Path, entry: str = ".tribal/") -> bool:
+    """Append *entry* to .gitignore if not already present. Returns True if modified."""
+    gitignore = root / ".gitignore"
+    if gitignore.exists():
+        content = gitignore.read_text(encoding="utf-8")
+        # Check if already covered (exact line match)
+        if any(line.strip() == entry for line in content.splitlines()):
+            return False
+        # Append with a blank separator if file doesn't end with newline
+        if content and not content.endswith("\n"):
+            content += "\n"
+        content += f"\n# TribalMind local config\n{entry}\n"
+    else:
+        content = f"# TribalMind local config\n{entry}\n"
+    gitignore.write_text(content, encoding="utf-8")
+    return True
+
+
 async def _setup_assistant(project_root: str) -> dict:
     """Create or find the Backboard assistant for this project."""
     from tribalmind.backboard.assistants import get_or_create_project_assistant
@@ -54,7 +72,7 @@ def init(
     global_init: bool = typer.Option(
         False, "--global", "-g",
         help="Set up a user-level default config. All repos without their own "
-        "tribal.yaml will inherit from it.",
+        ".tribal/config.yaml will inherit from it.",
     ),
     llm_provider_opt: str | None = typer.Option(  # noqa: UP007
         None, "--llm-provider",
@@ -72,7 +90,7 @@ def init(
 
     \b
     Modes:
-        tribal init            # per-repo: config in ./tribal.yaml
+        tribal init            # per-repo: config in ./.tribal/config.yaml
         tribal init --global   # user-level: config in ~/.config/tribalmind/
                                #   all repos inherit unless they have their own
 
@@ -202,7 +220,7 @@ def init(
         console.print("  [red]Failed to create assistant \u2014 no ID returned.[/red]")
         raise typer.Exit(1)
 
-    # Save to tribal.yaml (global or per-repo)
+    # Save config (global: tribal.yaml in user config dir, per-repo: .tribal/config.yaml)
     if global_init:
         config_path = _get_global_config_path()
     else:
@@ -226,6 +244,11 @@ def init(
         console.print(f"  {_CHECK} Initialized for [bold]{root_label}[/bold]")
         console.print(f"     [dim]assistant:[/dim] [#a78bfa]{assistant_id}[/#a78bfa]")
         console.print(f"     [dim]config:[/dim]    {config_path}")
+
+        # Ensure .tribal/ is gitignored
+        if _find_git_root():
+            if _ensure_gitignore(root):
+                console.print(f"  {_CHECK} Added [bold].tribal/[/bold] to .gitignore")
 
     # ── Step 4: Agent integration files ─────────────────────────────────────
     console.print(f"\n{_STEP}Step 4/4[/{_STEP[1:]}  [bold]Agent Integration[/bold]")

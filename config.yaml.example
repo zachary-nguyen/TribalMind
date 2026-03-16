@@ -1,5 +1,5 @@
 # TribalMind Configuration
-# Copy to tribal.yaml in your project root and customize.
+# Copy to .tribal/config.yaml in your project root and customize.
 # Values here are overridden by TRIBAL_* environment variables.
 
 # Backboard API settings

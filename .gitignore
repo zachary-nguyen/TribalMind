@@ -34,7 +34,8 @@ htmlcov/
 .tox/
 .nox/
 
-# Local config (use tribal.yaml.example as template)
+# TribalMind local config
+.tribal/
 tribal.yaml
 
 # IDE / editor
