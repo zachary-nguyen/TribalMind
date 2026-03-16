@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v2.3.2 (2026-03-16)
+
+### Bug Fixes
+
+- Catch all keyring errors, not just NoKeyringError
+  ([`c5febef`](https://github.com/zachary-nguyen/TribalMind/commit/c5febef9336c1d9f8f757ba50e225c5bcc0c12c7))
+
+
 ## v2.3.1 (2026-03-16)
 
 ### Bug Fixes
