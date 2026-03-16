@@ -2,6 +2,19 @@
 
 <!-- version list -->
 
+## v2.2.0 (2026-03-16)
+
+### Bug Fixes
+
+- Sort imports in init_cmd.py
+  ([`c0776b0`](https://github.com/zachary-nguyen/TribalMind/commit/c0776b0c8e374ad0aca780bdc00a8eaf445e46b3))
+
+### Features
+
+- Add interactive prompts, provider-specific agent snippets, and polished init flow
+  ([`15ff1a0`](https://github.com/zachary-nguyen/TribalMind/commit/15ff1a0ddc30e6bb6494061f701e886644b6bb60))
+
+
 ## v2.1.1 (2026-03-15)
 
 ### Bug Fixes
