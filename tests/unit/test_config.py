@@ -13,7 +13,10 @@ from tribalmind.config.settings import TribalSettings, clear_settings_cache
 def _isolate_config(tmp_path, monkeypatch):
     """Prevent the real global config from leaking into tests."""
     fake_config_dir = str(tmp_path / "_global_config")
-    monkeypatch.setattr("tribalmind.config.settings.platformdirs.user_config_dir", lambda *a, **kw: fake_config_dir)
+    monkeypatch.setattr(
+        "tribalmind.config.settings.platformdirs.user_config_dir",
+        lambda *a, **kw: fake_config_dir,
+    )
     clear_settings_cache()
 
 
