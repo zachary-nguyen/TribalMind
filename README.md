@@ -89,13 +89,15 @@ If a specific repo needs its own config (different LLM, custom settings), run `t
 
 ```bash
 cd special-project
-tribal init                   # creates a project-specific tribal.yaml
+tribal init                   # creates .tribal/config.yaml + adds .tribal/ to .gitignore
 ```
 
 **Config resolution order** (highest priority wins):
-1. `./tribal.yaml` (CWD)
-2. `<git-root>/tribal.yaml`
+1. `./.tribal/config.yaml` (CWD)
+2. `<git-root>/.tribal/config.yaml`
 3. `~/.config/tribalmind/tribal.yaml` (global)
+
+> Legacy `tribal.yaml` files in project roots are still recognized for backwards compatibility.
 
 ## Commands
 
@@ -232,7 +234,7 @@ tribal CLI (Typer + Rich)
   │           └── Memory CRUD
   │
   ├── config / init / status
-  │     ├── tribal.yaml (project settings)
+  │     ├── .tribal/config.yaml (project settings)
   │     ├── pydantic-settings (resolution)
   │     └── keyring (secrets)
   │

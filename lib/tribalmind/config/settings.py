@@ -1,7 +1,8 @@
 """Configuration management using Pydantic Settings.
 
-Loads settings from: defaults -> tribal.yaml -> environment variables (TRIBAL_ prefix).
-Searches for tribal.yaml in CWD, then walks up to git root, then user config dir.
+Loads settings from: defaults -> .tribal/config.yaml -> environment variables (TRIBAL_ prefix).
+Searches for .tribal/config.yaml in CWD, then walks up to git root, then user config dir.
+Falls back to legacy tribal.yaml locations for backwards compatibility.
 """
 
 from __future__ import annotations
@@ -25,16 +26,25 @@ def _find_git_root(start: Path) -> Path | None:
     return None
 
 
-def _find_yaml_configs() -> list[Path]:
-    """Find all tribal.yaml files, ordered from lowest to highest priority.
+def _first_existing(*paths: Path) -> Path | None:
+    """Return the first path that exists, or None."""
+    for p in paths:
+        if p.exists():
+            return p
+    return None
 
+
+def _find_yaml_configs() -> list[Path]:
+    """Find all config files, ordered from lowest to highest priority.
+
+    Looks for .tribal/config.yaml first, falling back to legacy tribal.yaml.
     Returns: [user config dir, git root, CWD] — only those that exist.
     Later entries override earlier ones when merged.
     """
     candidates: list[Path] = []
     cwd = Path.cwd()
 
-    # Lowest priority: user config dir
+    # Lowest priority: user config dir (global — no .tribal/ subfolder)
     config_dir = Path(platformdirs.user_config_dir("tribalmind"))
     candidate = config_dir / "tribal.yaml"
     if candidate.exists():
@@ -43,14 +53,20 @@ def _find_yaml_configs() -> list[Path]:
     # Mid priority: git root (if different from CWD)
     git_root = _find_git_root(cwd)
     if git_root and git_root != cwd:
-        candidate = git_root / "tribal.yaml"
-        if candidate.exists():
-            candidates.append(candidate)
+        found = _first_existing(
+            git_root / ".tribal" / "config.yaml",
+            git_root / "tribal.yaml",  # legacy fallback
+        )
+        if found:
+            candidates.append(found)
 
     # Highest priority: CWD
-    candidate = cwd / "tribal.yaml"
-    if candidate.exists():
-        candidates.append(candidate)
+    found = _first_existing(
+        cwd / ".tribal" / "config.yaml",
+        cwd / "tribal.yaml",  # legacy fallback
+    )
+    if found:
+        candidates.append(found)
 
     return candidates
 
@@ -87,7 +103,7 @@ def _load_yaml_settings() -> dict[str, Any]:
 class TribalSettings(BaseSettings):
     """TribalMind configuration model.
 
-    Priority: env vars (TRIBAL_ prefix) > tribal.yaml > defaults.
+    Priority: env vars (TRIBAL_ prefix) > .tribal/config.yaml > defaults.
     """
 
     model_config = SettingsConfigDict(

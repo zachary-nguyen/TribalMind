@@ -35,8 +35,8 @@ REDACTED_FIELDS = {"backboard_api_key"}
 
 
 def _get_config_path() -> Path:
-    """Get the tribal.yaml path in the current directory."""
-    return Path.cwd() / "tribal.yaml"
+    """Get the project config path in the current directory (.tribal/config.yaml)."""
+    return Path.cwd() / ".tribal" / "config.yaml"
 
 
 def _load_config_file(path: Path) -> dict:
@@ -48,6 +48,7 @@ def _load_config_file(path: Path) -> dict:
 
 
 def _save_config_file(path: Path, data: dict) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
     with open(path, "w") as f:
         yaml.dump(data, f, default_flow_style=False, sort_keys=False)
 
@@ -57,7 +58,7 @@ def config_set(
     key: str = typer.Argument(help="Configuration key (e.g., llm-provider, model-name)"),
     value: str = typer.Argument(help="Value to set"),
 ) -> None:
-    """Set a configuration value in tribal.yaml."""
+    """Set a configuration value in .tribal/config.yaml."""
     if key not in CONFIGURABLE_KEYS:
         valid = ", ".join(sorted(CONFIGURABLE_KEYS.keys()))
         console.print(f"[red]Unknown key:[/red] {key}")
@@ -195,7 +196,7 @@ def config_clear_memory(
     if not target_id:
         console.print(
             "[red]No assistant ID specified.[/red] "
-            "Use --assistant or set project-assistant-id in tribal.yaml."
+            "Use --assistant or set project-assistant-id in .tribal/config.yaml."
         )
         raise typer.Exit(1)
 
