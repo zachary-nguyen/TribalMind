@@ -151,7 +151,23 @@ def init(
         if project_root:
             root = Path(project_root).resolve()
         else:
-            root = _find_git_root() or Path.cwd()
+            git_root = _find_git_root()
+            if git_root:
+                root = git_root
+            else:
+                root = Path.cwd()
+                console.print(
+                    f"\n  [yellow]⚠  No git repository detected.[/yellow]"
+                    f"  Assistant will be named [bold]{root.name}[/bold] (directory name)."
+                )
+                from tribalmind.cli.prompts import confirm
+
+                if not confirm("  Continue?", default=True):
+                    console.print(
+                        "\n  [dim]Run[/dim] [#a78bfa]tribal init[/#a78bfa]"
+                        " [dim]from inside a git repo for repo-scoped memory.[/dim]"
+                    )
+                    raise typer.Exit()
         root_label = str(root)
         assistant_root = str(root)
 
