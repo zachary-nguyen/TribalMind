@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v2.2.1 (2026-03-16)
+
+### Bug Fixes
+
+- Warn user when running tribal init outside a git repo
+  ([`028eeed`](https://github.com/zachary-nguyen/TribalMind/commit/028eeed71efad106904c003325f4d01b8cf35a15))
+
+
 ## v2.2.0 (2026-03-16)
 
 ### Bug Fixes
