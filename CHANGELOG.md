@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v2.4.0 (2026-03-16)
+
+### Features
+
+- Include fastapi and uvicorn in core dependencies
+  ([`97d28fe`](https://github.com/zachary-nguyen/TribalMind/commit/97d28fe5c88475f9e71350cdffdf18d765ea0069))
+
+
 ## v2.3.2 (2026-03-16)
 
 ### Bug Fixes
