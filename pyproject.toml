@@ -22,6 +22,8 @@ dependencies = [
     "keyring>=25",
     "platformdirs>=4",
     "questionary>=2.1",
+    "fastapi>=0.110",
+    "uvicorn[standard]>=0.29",
 ]
 
 [project.optional-dependencies]
