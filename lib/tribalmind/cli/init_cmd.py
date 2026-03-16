@@ -10,6 +10,10 @@ from rich.console import Console
 
 console = Console()
 
+# Step label style
+_STEP = "[bold #818cf8]"
+_CHECK = "[bold #34d399]\u2714[/bold #34d399]"
+
 
 def _find_git_root() -> Path | None:
     """Walk up from CWD to find the nearest .git directory."""
@@ -91,18 +95,21 @@ def init(
     )
     from tribalmind.config.settings import clear_settings_cache
 
-    # Step 1: Ensure API key is configured
+    # ── Step 1: API key ─────────────────────────────────────────────────────
+    console.print(f"\n{_STEP}Step 1/4[/{_STEP[1:]}  [bold]API Key[/bold]")
     if api_key:
         set_credential(BACKBOARD_API_KEY, api_key)
         clear_settings_cache()
-        console.print("[green]API key stored.[/green]")
-    elif not get_backboard_api_key():
-        api_key = typer.prompt("Enter your Backboard API key", hide_input=True)
+        console.print(f"  {_CHECK} API key stored.")
+    elif get_backboard_api_key():
+        console.print(f"  {_CHECK} API key already configured.")
+    else:
+        api_key = typer.prompt("  Enter your Backboard API key", hide_input=True)
         api_key = api_key.strip() if api_key else ""
         if not api_key or len(api_key) < 8:
-            console.print("[red]Invalid API key.[/red]")
+            console.print("  [red]Invalid API key.[/red]")
             console.print(
-                "[dim]Paste not working? Use:[/dim] "
+                "  [dim]Paste not working? Use:[/dim] "
                 "[#a78bfa]tribal init --api-key YOUR_KEY[/#a78bfa]"
             )
             raise typer.Exit(1)
@@ -121,9 +128,9 @@ def init(
             asyncio.run(_validate_key())
         except BackboardError as e:
             if e.status_code == 401:
-                console.print(f"[red]API key rejected by Backboard:[/red] {e.detail}")
+                console.print(f"  [red]API key rejected by Backboard:[/red] {e.detail}")
                 console.print(
-                    "[dim]Paste not working? Use:[/dim] "
+                    "  [dim]Paste not working? Use:[/dim] "
                     "[#a78bfa]tribal init --api-key YOUR_KEY[/#a78bfa]"
                 )
                 raise typer.Exit(1)
@@ -131,11 +138,13 @@ def init(
 
         set_credential(BACKBOARD_API_KEY, api_key)
         clear_settings_cache()
-        console.print("[green]API key stored in system keyring.[/green]")
+        console.print(f"  {_CHECK} API key stored in system keyring.")
 
-    # Step 2: Determine scope and project root
+    # ── Step 2: LLM provider ────────────────────────────────────────────────
+    console.print(f"\n{_STEP}Step 2/4[/{_STEP[1:]}  [bold]LLM Provider[/bold]")
+
+    # Determine scope and project root
     if global_init:
-        # Global mode: use "global" as the project root identifier
         root_label = "global (all projects)"
         assistant_root = "global"
     else:
@@ -146,51 +155,54 @@ def init(
         root_label = str(root)
         assistant_root = str(root)
 
-    # Step 2b: LLM provider/model selection
     llm_presets = {
-        "1": ("anthropic", "claude-sonnet-4-6", "Anthropic — Claude Sonnet 4.6"),
-        "2": ("openai", "gpt-5-codex", "OpenAI — GPT-5 Codex"),
-        "3": ("google", "gemini-3.1-flash-lite-preview", "Google — Gemini 3.1 Flash Lite"),
+        "1": ("anthropic", "claude-sonnet-4-6", "Anthropic \u2014 Claude Sonnet 4.6"),
+        "2": ("openai", "gpt-5-codex", "OpenAI \u2014 GPT-5 Codex"),
+        "3": ("google", "gemini-3.1-flash-lite-preview", "Google \u2014 Gemini 3.1 Flash Lite"),
     }
     llm_provider = llm_provider_opt
     model_name = model_name_opt
 
     if llm_provider and model_name:
-        pass  # CLI flags provided, skip interactive
+        console.print(f"  {_CHECK} Using {llm_provider}/{model_name}")
     elif not api_key:
-        console.print()
-        console.print("[bold]Which LLM should TribalMind use for parsing memories?[/bold]")
-        console.print()
-        for num, (_, _, label) in llm_presets.items():
-            console.print(f"  [#a78bfa]{num}.[/#a78bfa] {label}")
-        console.print("  [#a78bfa]4.[/#a78bfa] Custom provider/model")
-        console.print()
-        choice = typer.prompt("  Choose", default="1").strip()
+        from tribalmind.cli.prompts import select
 
-        if choice in llm_presets:
+        llm_choices = [
+            (label, num)
+            for num, (_, _, label) in llm_presets.items()
+        ]
+        llm_choices.append(("Custom provider/model", "custom"))
+        choice = select(
+            "  Which LLM should TribalMind use for parsing memories?",
+            choices=llm_choices,
+            default=llm_choices[0][1],
+        )
+
+        if choice is None:
+            raise typer.Exit()
+        elif choice in llm_presets:
             llm_provider, model_name, _ = llm_presets[choice]
-        elif choice == "4":
+        else:
             llm_provider = typer.prompt("  Provider (anthropic/openai/google)")
             model_name = typer.prompt("  Model name")
-        else:
-            # Default to anthropic
-            llm_provider, model_name, _ = llm_presets["1"]
 
-        console.print(f"  [dim]Using:[/dim] {llm_provider}/{model_name}")
+        console.print(f"  {_CHECK} Using [#a78bfa]{llm_provider}/{model_name}[/#a78bfa]")
 
-    # Step 3: Create or find the Backboard assistant
+    # ── Step 3: Create assistant ────────────────────────────────────────────
+    console.print(f"\n{_STEP}Step 3/4[/{_STEP[1:]}  [bold]Project Setup[/bold]")
     try:
         assistant = asyncio.run(_setup_assistant(assistant_root))
     except BackboardError as e:
-        console.print(f"[red]Backboard API error {e.status_code}:[/red] {e.detail}")
+        console.print(f"  [red]Backboard API error {e.status_code}:[/red] {e.detail}")
         raise typer.Exit(1)
 
     assistant_id = assistant.get("assistant_id", "")
     if not assistant_id:
-        console.print("[red]Failed to create assistant — no ID returned.[/red]")
+        console.print("  [red]Failed to create assistant \u2014 no ID returned.[/red]")
         raise typer.Exit(1)
 
-    # Step 4: Save to tribal.yaml (global or per-repo)
+    # Save to tribal.yaml (global or per-repo)
     if global_init:
         config_path = _get_global_config_path()
     else:
@@ -206,82 +218,70 @@ def init(
     _save_config_file(config_path, data)
     clear_settings_cache()
 
-    console.print()
     if global_init:
-        console.print("[green]TribalMind initialized globally[/green]")
-        console.print(f"  [dim]assistant:[/dim] [#a78bfa]{assistant_id}[/#a78bfa]")
-        console.print(f"  [dim]config:[/dim]    {config_path}")
-        console.print()
-        console.print(
-            "  [dim]All repos will use this config unless they"
-            " have their own tribal.yaml.[/dim]"
-        )
-        console.print(
-            "  [dim]Run [bold]tribal init[/bold] inside a repo to"
-            " override with a project-specific setup.[/dim]"
-        )
+        console.print(f"  {_CHECK} Initialized globally")
+        console.print(f"     [dim]assistant:[/dim] [#a78bfa]{assistant_id}[/#a78bfa]")
+        console.print(f"     [dim]config:[/dim]    {config_path}")
     else:
-        console.print(f"[green]TribalMind initialized for[/green] {root_label}")
-        console.print(f"  [dim]assistant:[/dim] [#a78bfa]{assistant_id}[/#a78bfa]")
-        console.print(f"  [dim]config:[/dim]    {config_path}")
+        console.print(f"  {_CHECK} Initialized for [bold]{root_label}[/bold]")
+        console.print(f"     [dim]assistant:[/dim] [#a78bfa]{assistant_id}[/#a78bfa]")
+        console.print(f"     [dim]config:[/dim]    {config_path}")
 
-    # Step 5: Offer to set up agent integration files
-    console.print()
+    # ── Step 4: Agent integration files ─────────────────────────────────────
+    console.print(f"\n{_STEP}Step 4/4[/{_STEP[1:]}  [bold]Agent Integration[/bold]")
     if api_key:
-        # Non-interactive mode (agent use) — skip the prompt
-        pass
-    elif typer.confirm(
-        "Set up agent integration files (CLAUDE.md, .cursorrules, etc.)?",
-        default=True,
-    ):
-        from tribalmind.cli.agents_cmd import (
-            AGENTS,
-            TRIBAL_SNIPPET,
-            _detect_agents,
-            _inject_snippet,
-        )
+        console.print(f"  {_CHECK} Skipped (non-interactive mode)")
+    else:
+        from tribalmind.cli.prompts import confirm
 
-        detected = _detect_agents(root)
-        if detected:
-            labels = ", ".join(AGENTS[k]["label"] for k in detected)
-            console.print(f"  [dim]Detected existing agent files:[/dim] {labels}")
-            targets = detected
-        else:
-            console.print()
-            console.print("  [bold]Which agent config files would you like to create?[/bold]")
-            console.print()
-            for i, (key, info) in enumerate(AGENTS.items(), 1):
-                console.print(f"    [#a78bfa]{i}.[/#a78bfa] {key}  — {info['label']}")
-            console.print()
-            choices = typer.prompt(
-                "  Enter numbers separated by commas (e.g. 1,2), or 'all'",
-                default="1",
+        if confirm("  Set up agent integration files?", default=True):
+            from tribalmind.cli.agents_cmd import (
+                AGENT_SNIPPETS,
+                AGENTS,
+                _detect_agents,
+                _inject_snippet,
             )
-            if choices.strip().lower() == "all":
-                targets = list(AGENTS.keys())
+            from tribalmind.cli.prompts import checkbox
+
+            detected = _detect_agents(root)
+            if detected:
+                targets = detected
             else:
-                keys_list = list(AGENTS.keys())
-                targets = []
-                for part in choices.split(","):
-                    part = part.strip()
-                    if part.isdigit():
-                        idx = int(part) - 1
-                        if 0 <= idx < len(keys_list):
-                            targets.append(keys_list[idx])
-                if not targets:
-                    console.print("  [dim]Skipped agent setup.[/dim]")
-                    targets = []
+                agent_choices = [
+                    (f"{key}  \u2014 {info['label']}", key, key == "AGENTS.md")
+                    for key, info in AGENTS.items()
+                ]
+                selected = checkbox(
+                    "  Which agent config files would you like to create?",
+                    choices=agent_choices,
+                )
 
-        for key in targets:
-            info = AGENTS[key]
-            file_path = root / info["path"]
-            result = _inject_snippet(file_path, TRIBAL_SNIPPET, info["section_marker"])
-            if result == "created":
-                console.print(f"    [green]created[/green]  {info['path']}")
-            elif result == "updated":
-                console.print(f"    [yellow]updated[/yellow]  {info['path']}")
+                if selected is None:
+                    raise typer.Exit()
+                targets = selected
 
+            if targets:
+                for key in targets:
+                    info = AGENTS[key]
+                    file_path = root / info["path"]
+                    snippet = AGENT_SNIPPETS[info["snippet_key"]]
+                    result = _inject_snippet(file_path, snippet, info["section_marker"])
+                    if result == "created":
+                        console.print(f"  {_CHECK} [green]created[/green]  {info['path']}")
+                    elif result == "updated":
+                        console.print(f"  {_CHECK} [yellow]updated[/yellow]  {info['path']}")
+                    else:
+                        console.print(f"  {_CHECK} [dim]unchanged[/dim]  {info['path']}")
+            else:
+                console.print("  [dim]Skipped \u2014 no files selected.[/dim]")
+        else:
+            console.print("  [dim]Skipped.[/dim]")
+
+    # ── Done ────────────────────────────────────────────────────────────────
     console.print()
-    console.print("[dim]Get started:[/dim]")
-    console.print('  tribal remember "your first piece of knowledge"')
-    console.print('  tribal recall "search query"')
+    console.print("[bold #34d399]Setup complete![/bold #34d399]")
+    console.print()
+    console.print("  [dim]Get started:[/dim]")
+    console.print('  [#a78bfa]tribal remember[/#a78bfa] "your first piece of knowledge"')
+    console.print('  [#a78bfa]tribal recall[/#a78bfa]   "search query"')
+    console.print()

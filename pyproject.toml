@@ -21,6 +21,7 @@ dependencies = [
     "pyyaml>=6",
     "keyring>=25",
     "platformdirs>=4",
+    "questionary>=2.1",
 ]
 
 [project.optional-dependencies]

@@ -90,6 +90,5 @@ from tribalmind.cli.agents_cmd import setup_agents  # noqa: E402
 
 app.command("setup-agents")(setup_agents)
 
-
 if __name__ == "__main__":
     app()
