@@ -113,11 +113,20 @@ def init(
     )
     from tribalmind.config.settings import clear_settings_cache
 
+    def _store_api_key(key_value: str) -> None:
+        """Store API key in keyring, falling back to config file."""
+        stored = set_credential(BACKBOARD_API_KEY, key_value)
+        if not stored:
+            cfg_path = _get_config_path()
+            cfg = _load_config_file(cfg_path)
+            cfg["backboard_api_key"] = key_value.strip()
+            _save_config_file(cfg_path, cfg)
+        clear_settings_cache()
+
     # ── Step 1: API key ─────────────────────────────────────────────────────
     console.print(f"\n{_STEP}Step 1/4[/{_STEP[1:]}  [bold]API Key[/bold]")
     if api_key:
-        set_credential(BACKBOARD_API_KEY, api_key)
-        clear_settings_cache()
+        _store_api_key(api_key)
         console.print(f"  {_CHECK} API key stored.")
     elif get_backboard_api_key():
         console.print(f"  {_CHECK} API key already configured.")
@@ -154,9 +163,8 @@ def init(
                 raise typer.Exit(1)
             # Other errors (network, etc.) — don't block init, key format is fine
 
-        set_credential(BACKBOARD_API_KEY, api_key)
-        clear_settings_cache()
-        console.print(f"  {_CHECK} API key stored in system keyring.")
+        _store_api_key(api_key)
+        console.print(f"  {_CHECK} API key stored.")
 
     # ── Step 2: LLM provider ────────────────────────────────────────────────
     console.print(f"\n{_STEP}Step 2/4[/{_STEP[1:]}  [bold]LLM Provider[/bold]")

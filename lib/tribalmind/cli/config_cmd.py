@@ -133,10 +133,16 @@ def config_set_secret(
         raise typer.Exit(1)
 
     credential_key = SECRET_KEYS[name]
-    set_credential(credential_key, value)
+    stored_in_keyring = set_credential(credential_key, value)
+    if not stored_in_keyring:
+        config_path = _get_config_path()
+        data = _load_config_file(config_path)
+        data[credential_key] = value.strip()
+        _save_config_file(config_path, data)
     clear_settings_cache()
     masked = value[:4] + "\u2022" * 8 + value[-4:]
-    console.print(f"[green]Stored[/green] {name} in system keyring: {masked}")
+    location = "system keyring" if stored_in_keyring else "config file"
+    console.print(f"[green]Stored[/green] {name} in {location}: {masked}")
 
 
 @config_app.command("assistants")
