@@ -45,7 +45,7 @@ def set_credential(key: str, value: str) -> bool:
     try:
         keyring.set_password(_service_name(key), key, value.strip())
         return True
-    except keyring.errors.NoKeyringError:
+    except keyring.errors.KeyringError:
         _warn_no_keyring()
         return False
 
@@ -54,7 +54,7 @@ def get_credential(key: str) -> str | None:
     """Retrieve a credential from the system keyring."""
     try:
         value = keyring.get_password(_service_name(key), key)
-    except keyring.errors.NoKeyringError:
+    except keyring.errors.KeyringError:
         _warn_no_keyring()
         return None
     return value.strip() if value else value
@@ -64,7 +64,7 @@ def delete_credential(key: str) -> None:
     """Remove a credential from the system keyring."""
     try:
         keyring.delete_password(_service_name(key), key)
-    except (keyring.errors.PasswordDeleteError, keyring.errors.NoKeyringError):
+    except keyring.errors.KeyringError:
         pass
 
 
