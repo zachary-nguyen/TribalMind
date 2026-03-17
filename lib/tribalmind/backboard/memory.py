@@ -52,7 +52,10 @@ def parse_memory(raw_content: str, raw: dict[str, Any] | None = None) -> MemoryE
 
     if raw:
         entry.memory_id = raw.get("memory_id", raw.get("id", ""))
-        entry.relevance_score = raw.get("score", raw.get("relevance", 0.0))
+        # Backboard returns a distance (lower = closer); convert to
+        # similarity so that higher values = more relevant.
+        distance = raw.get("score", raw.get("relevance", 0.0))
+        entry.relevance_score = max(0.0, 1.0 - distance) if distance else 0.0
 
     # Try JSON format first
     try:
