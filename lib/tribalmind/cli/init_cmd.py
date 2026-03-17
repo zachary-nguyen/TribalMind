@@ -15,6 +15,29 @@ _STEP = "[bold #818cf8]"
 _CHECK = "[bold #34d399]\u2714[/bold #34d399]"
 
 
+def _detect_shell() -> str | None:
+    """Detect the user's current shell for completion installation."""
+    import os
+    import sys
+
+    # Check SHELL env var (Unix)
+    shell_env = os.environ.get("SHELL", "")
+    if shell_env:
+        name = Path(shell_env).name
+        if name in ("bash", "zsh", "fish"):
+            return name
+
+    # Check Windows PowerShell
+    if sys.platform == "win32":
+        # Check if running inside PowerShell
+        if os.environ.get("PSModulePath"):
+            return "powershell"
+        return "powershell"  # Default on Windows
+
+    # Fallback: check COMSPEC or default
+    return "bash"
+
+
 def _find_git_root() -> Path | None:
     """Walk up from CWD to find the nearest .git directory."""
     current = Path.cwd().resolve()
@@ -124,7 +147,7 @@ def init(
         clear_settings_cache()
 
     # ── Step 1: API key ─────────────────────────────────────────────────────
-    console.print(f"\n{_STEP}Step 1/4[/{_STEP[1:]}  [bold]API Key[/bold]")
+    console.print(f"\n{_STEP}Step 1/5[/{_STEP[1:]}  [bold]API Key[/bold]")
     if api_key:
         _store_api_key(api_key)
         console.print(f"  {_CHECK} API key stored.")
@@ -167,7 +190,7 @@ def init(
         console.print(f"  {_CHECK} API key stored.")
 
     # ── Step 2: LLM provider ────────────────────────────────────────────────
-    console.print(f"\n{_STEP}Step 2/4[/{_STEP[1:]}  [bold]LLM Provider[/bold]")
+    console.print(f"\n{_STEP}Step 2/5[/{_STEP[1:]}  [bold]LLM Provider[/bold]")
 
     # Determine scope and project root
     if global_init:
@@ -232,7 +255,7 @@ def init(
         console.print(f"  {_CHECK} Using [#a78bfa]{llm_provider}/{model_name}[/#a78bfa]")
 
     # ── Step 3: Create assistant ────────────────────────────────────────────
-    console.print(f"\n{_STEP}Step 3/4[/{_STEP[1:]}  [bold]Project Setup[/bold]")
+    console.print(f"\n{_STEP}Step 3/5[/{_STEP[1:]}  [bold]Project Setup[/bold]")
     try:
         assistant = asyncio.run(_setup_assistant(assistant_root))
     except BackboardError as e:
@@ -275,7 +298,7 @@ def init(
                 console.print(f"  {_CHECK} Added [bold].tribal/[/bold] to .gitignore")
 
     # ── Step 4: Agent integration files ─────────────────────────────────────
-    console.print(f"\n{_STEP}Step 4/4[/{_STEP[1:]}  [bold]Agent Integration[/bold]")
+    console.print(f"\n{_STEP}Step 4/5[/{_STEP[1:]}  [bold]Agent Integration[/bold]")
     if api_key:
         console.print(f"  {_CHECK} Skipped (non-interactive mode)")
     else:
@@ -323,6 +346,59 @@ def init(
                 console.print("  [dim]Skipped \u2014 no files selected.[/dim]")
         else:
             console.print("  [dim]Skipped.[/dim]")
+
+    # ── Step 5: Shell completions ────────────────────────────────────────────
+    console.print(f"\n{_STEP}Step 5/5[/{_STEP[1:]}  [bold]Shell Completions[/bold]")
+    if api_key:
+        console.print(f"  {_CHECK} Skipped (non-interactive mode)")
+        console.print(
+            "     [dim]Install later with:[/dim] "
+            "[#a78bfa]tribal --install-completion[/#a78bfa]"
+        )
+    else:
+        from tribalmind.cli.prompts import confirm as _confirm_completion
+
+        if _confirm_completion("  Install shell tab-completions?", default=False):
+            import subprocess
+
+            # Detect the user's shell
+            shell_name = _detect_shell()
+            if shell_name:
+                try:
+                    subprocess.run(
+                        ["tribal", "--install-completion", shell_name],
+                        check=True,
+                        capture_output=True,
+                    )
+                    console.print(
+                        f"  {_CHECK} Installed completions for "
+                        f"[#a78bfa]{shell_name}[/#a78bfa]"
+                    )
+                    console.print(
+                        "     [dim]Restart your shell to activate.[/dim]"
+                    )
+                except (subprocess.CalledProcessError, FileNotFoundError):
+                    console.print(
+                        "  [yellow]Could not install automatically.[/yellow]"
+                    )
+                    console.print(
+                        "     [dim]Run manually:[/dim] "
+                        f"[#a78bfa]tribal --install-completion {shell_name}[/#a78bfa]"
+                    )
+            else:
+                console.print(
+                    "  [yellow]Could not detect shell.[/yellow]"
+                )
+                console.print(
+                    "     [dim]Run manually:[/dim] "
+                    "[#a78bfa]tribal --install-completion bash[/#a78bfa]"
+                )
+        else:
+            console.print("  [dim]Skipped.[/dim]")
+            console.print(
+                "     [dim]Install later with:[/dim] "
+                "[#a78bfa]tribal --install-completion[/#a78bfa]"
+            )
 
     # ── Done ────────────────────────────────────────────────────────────────
     console.print()
