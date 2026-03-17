@@ -190,6 +190,33 @@ tribal config clear-memory          # Wipe memories for the project assistant
 tribal config clear-memory -a <id>  # Wipe memories for a specific assistant
 ```
 
+### Shell Completions
+
+TribalMind supports tab-completion for commands, subcommands, and flags. Install completions for your shell:
+
+```bash
+tribal --install-completion bash        # Bash
+tribal --install-completion zsh         # Zsh
+tribal --install-completion fish        # Fish
+tribal --install-completion powershell  # PowerShell
+```
+
+After installing, restart your shell (or source the config file). Then tab-completion works out of the box:
+
+```
+tribal re<TAB>          → recall, remember
+tribal recall --j<TAB>  → --json
+tribal fo<TAB>          → forget
+tribal st<TAB>          → status
+tribal co<TAB>          → config
+```
+
+To inspect the generated completion script without installing it:
+
+```bash
+tribal --show-completion bash
+```
+
 ### Upgrade
 
 ```bash
