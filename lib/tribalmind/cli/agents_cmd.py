@@ -9,6 +9,11 @@ from rich.console import Console
 
 console = Console()
 
+# ── Markers for auto-update detection ──────────────────────────────────────
+
+MARKER_START = "<!-- tribalmind:start -->"
+MARKER_END = "<!-- tribalmind:end -->"
+
 # ── Shared building blocks ──────────────────────────────────────────────────
 
 _RECALL_SECTION = """\
@@ -79,6 +84,7 @@ Pipe via stdin: `echo "insight" | tribal remember`"""
 # ── Provider-specific snippets ──────────────────────────────────────────────
 
 SNIPPET_CLAUDE_CODE = f"""\
+{MARKER_START}
 ## TribalMind — Project Memory
 
 This project uses [TribalMind](https://github.com/zachary-nguyen/TribalMind) \
@@ -95,9 +101,11 @@ that all agents and team members can access.
 
 {_REMEMBER_SECTION}
 
-{_REFERENCE_SECTION}"""
+{_REFERENCE_SECTION}
+{MARKER_END}"""
 
 SNIPPET_DEFAULT = f"""\
+{MARKER_START}
 ## TribalMind — Project Memory
 
 This project uses [TribalMind](https://github.com/zachary-nguyen/TribalMind) \
@@ -110,7 +118,8 @@ to persist and retrieve knowledge across sessions.
 
 {_REMEMBER_SECTION}
 
-{_REFERENCE_SECTION}"""
+{_REFERENCE_SECTION}
+{MARKER_END}"""
 
 AGENT_SNIPPETS: dict[str, str] = {
     "claude-code": SNIPPET_CLAUDE_CODE,
@@ -180,12 +189,33 @@ def _detect_agents(root: Path) -> list[str]:
 def _inject_snippet(file_path: Path, snippet: str, marker: str) -> str:
     """Append or replace the TribalMind section in a file.
 
+    Detection order:
+    1. HTML markers (<!-- tribalmind:start --> / <!-- tribalmind:end -->)
+    2. Legacy heading-based detection (## TribalMind ... next ## heading)
+    3. Append if neither found
+
     Returns: 'created', 'updated', or 'unchanged'.
     """
     if file_path.exists():
         content = file_path.read_text(encoding="utf-8")
+
+        # ── Strategy 1: HTML marker-based replacement ──────────────────
+        if MARKER_START in content and MARKER_END in content:
+            start = content.index(MARKER_START)
+            end = content.index(MARKER_END) + len(MARKER_END)
+            before = content[:start].rstrip()
+            after = content[end:].lstrip()
+            parts = [before, snippet.rstrip()]
+            if after:
+                parts.append(after)
+            new_content = "\n\n".join(parts) + "\n"
+            if new_content.strip() == content.strip():
+                return "unchanged"
+            file_path.write_text(new_content, encoding="utf-8")
+            return "updated"
+
+        # ── Strategy 2: Legacy heading-based replacement ───────────────
         if marker in content:
-            # Replace existing section: from marker to next ## heading or EOF
             start = content.index(marker)
             rest = content[start + len(marker) :]
             # Find the next same-level heading (## ) or EOF
@@ -210,14 +240,14 @@ def _inject_snippet(file_path: Path, snippet: str, marker: str) -> str:
                 return "unchanged"
             file_path.write_text(new_content, encoding="utf-8")
             return "updated"
-        else:
-            # Append
-            separator = "\n\n" if content.rstrip() else ""
-            file_path.write_text(
-                content.rstrip() + separator + snippet.rstrip() + "\n",
-                encoding="utf-8",
-            )
-            return "updated"
+
+        # ── Strategy 3: Append ─────────────────────────────────────────
+        separator = "\n\n" if content.rstrip() else ""
+        file_path.write_text(
+            content.rstrip() + separator + snippet.rstrip() + "\n",
+            encoding="utf-8",
+        )
+        return "updated"
     else:
         file_path.parent.mkdir(parents=True, exist_ok=True)
         file_path.write_text(snippet.rstrip() + "\n", encoding="utf-8")
