@@ -32,6 +32,7 @@ def log_activity(
     memory_id: str = "",
     count: int = 0,
     source: str = "",
+    assistant_id: str = "",
     metadata: dict[str, Any] | None = None,
 ) -> None:
     """Append an activity event to the local log.
@@ -50,6 +51,8 @@ def log_activity(
         Number of results returned (recall) or memories deleted (forget).
     source : str
         Where the command came from (e.g. "cli", "agent").
+    assistant_id : str
+        Backboard assistant ID the action targeted.
     metadata : dict
         Any additional context to log.
     """
@@ -61,6 +64,7 @@ def log_activity(
         "memory_id": memory_id,
         "count": count,
         "source": source,
+        "assistant_id": assistant_id,
         **(metadata or {}),
     }
     try:

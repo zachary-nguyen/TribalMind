@@ -120,6 +120,9 @@ class TribalSettings(BaseSettings):
     project_root: Path = Field(default_factory=Path.cwd)
     project_assistant_id: str | None = None
 
+    # Limits
+    max_memories_per_assistant: int = 500
+
     # LLM (via Backboard's multi-provider model selection)
     llm_provider: str = "anthropic"
     model_name: str = "claude-sonnet-4-20250514"

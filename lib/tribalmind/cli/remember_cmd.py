@@ -110,7 +110,7 @@ async def _parse_with_llm(text: str) -> dict | None:
 async def _store_memory(text: str) -> dict:
     """Parse text with LLM and store as a new Backboard memory."""
     from tribalmind.backboard.client import create_client
-    from tribalmind.backboard.memory import add_memory, encode_memory
+    from tribalmind.backboard.memory import add_memory, encode_memory, enforce_memory_limit
     from tribalmind.config.settings import get_settings
 
     settings = get_settings()
@@ -144,6 +144,11 @@ async def _store_memory(text: str) -> dict:
 
     async with create_client() as client:
         await add_memory(client, assistant_id, encoded, metadata=metadata)
+        # Prune oldest memories if over the limit
+        if settings.max_memories_per_assistant > 0:
+            await enforce_memory_limit(
+                client, assistant_id, settings.max_memories_per_assistant
+            )
 
     return parsed
 
@@ -194,10 +199,13 @@ def remember(
         parsed = asyncio.run(_store_memory(input_text))
 
     from tribalmind.activity import log_activity
+    from tribalmind.config.settings import get_settings
+
     log_activity(
         "remember",
         parsed.get("content", input_text[:120]),
         query=input_text,
+        assistant_id=get_settings().project_assistant_id or "",
         metadata={
             "category": parsed.get("category", "context"),
             "subject": parsed.get("subject", ""),

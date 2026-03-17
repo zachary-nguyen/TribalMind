@@ -75,3 +75,46 @@ export function clearMemories(assistantId: string): Promise<{ deleted: number }>
   return request<{ deleted: number }>("DELETE", `/assistants/${assistantId}/memories`)
 }
 
+// ── Activity ──────────────────────────────────────────────────────────────
+
+export interface ActivityEvent {
+  timestamp: string
+  action: string
+  summary: string
+  query?: string
+  memory_id?: string
+  count?: number
+  source?: string
+  assistant_id?: string
+  [key: string]: unknown
+}
+
+async function activityRequest<T = unknown>(
+  method: string,
+  path: string,
+): Promise<T> {
+  const res = await fetch(`/api${path}`, { method })
+  if (!res.ok) {
+    const detail = await res.text().catch(() => res.statusText)
+    throw new Error(`${res.status}: ${detail}`)
+  }
+  if (res.status === 204) return {} as T
+  return res.json() as Promise<T>
+}
+
+export function getActivity(
+  limit = 100,
+  offset = 0,
+  action = "",
+  assistantId = "",
+): Promise<ActivityEvent[]> {
+  const params = new URLSearchParams({ limit: String(limit), offset: String(offset) })
+  if (action) params.set("action", action)
+  if (assistantId) params.set("assistant_id", assistantId)
+  return activityRequest<ActivityEvent[]>("GET", `/activity?${params}`)
+}
+
+export function clearActivity(): Promise<{ deleted: number }> {
+  return activityRequest<{ deleted: number }>("DELETE", "/activity")
+}
+

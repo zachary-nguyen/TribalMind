@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react"
 import { NavLink } from "react-router-dom"
 // eslint-disable-next-line deprecation/deprecation
-import { Brain, Bot, Sun, Moon, Github, BookOpen } from "lucide-react"
+import { Brain, Bot, Activity, Sun, Moon, Github, BookOpen } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const NAV_ITEMS = [
   { to: "/", icon: Brain, label: "Memory" },
   { to: "/assistants", icon: Bot, label: "Assistants" },
+  { to: "/activity", icon: Activity, label: "Activity" },
 ] as const
 
 function useTheme() {
