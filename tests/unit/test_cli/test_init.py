@@ -18,8 +18,8 @@ class TestInitCommand:
         mock_git_root.return_value = tmp_path
         mock_setup.return_value = {"assistant_id": "ast-123"}
 
-        # Input: "1" for LLM selection (Anthropic), "n" for agent integration
-        result = runner.invoke(app, ["init"], input="1\nn\n")
+        # Input: "1" for LLM selection (Anthropic), "n" for agent integration, "n" for shell completions
+        result = runner.invoke(app, ["init"], input="1\nn\nn\n")
         assert result.exit_code == 0
         assert "initialized" in result.output.lower() or "ast-123" in result.output
         mock_setup.assert_called_once()
@@ -64,7 +64,7 @@ class TestInitCommand:
         client_instance = AsyncMock()
         mock_client_cls.return_value = client_instance
 
-        # Input: API key, "1" for LLM selection, "n" for agent integration
-        result = runner.invoke(app, ["init"], input="my-secret-api-key-1234\n1\nn\n")
+        # Input: API key, "1" for LLM selection, "n" for agent integration, "n" for shell completions
+        result = runner.invoke(app, ["init"], input="my-secret-api-key-1234\n1\nn\nn\n")
         assert result.exit_code == 0
         mock_set.assert_called_once()
