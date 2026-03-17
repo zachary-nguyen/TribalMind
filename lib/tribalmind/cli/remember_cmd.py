@@ -40,7 +40,8 @@ Categories:
 - "architecture" = how modules connect, why things are built a certain way
 - "context" = project description, team info, onboarding knowledge
 - "decision" = trade-off considered, what was chosen and why
-- "tip" = best practice, useful trick, or workflow shortcut
+- "tip" = best practice, useful trick, or shortcut
+- "workflow" = multi-step process, runbook, or repeatable procedure
 
 Rules:
 - subject should be a short label for what this knowledge is about

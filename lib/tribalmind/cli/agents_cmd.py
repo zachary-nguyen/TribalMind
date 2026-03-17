@@ -29,6 +29,8 @@ significant time.
 3. You need context about a **past decision, convention, or known issue**
 4. You are **stuck or unsure** about the right approach
 5. You are starting work in an **unfamiliar part of the codebase**
+6. The user asks **"how do I…"** or you need to perform a **multi-step process** \
+— check for stored workflows first
 
 ```bash
 tribal recall --json "<describe what you need context on>"
@@ -54,6 +56,8 @@ run `tribal remember` immediately — before responding to the user.**
 3. You discover a **workaround, gotcha, or surprising behavior**
 4. You learn **how modules connect** or why something is built a certain way
 5. You encounter **environment, setup, or config quirks**
+6. The user teaches or you discover a **multi-step process, runbook, or deployment \
+procedure** — store it as a workflow
 
 **Skip** trivial changes, obvious fixes, or things already clear from the code.
 

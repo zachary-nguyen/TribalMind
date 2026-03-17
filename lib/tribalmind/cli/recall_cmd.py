@@ -13,7 +13,7 @@ from rich.table import Table
 console = Console()
 
 VALID_CATEGORIES = frozenset({
-    "fix", "convention", "architecture", "context", "decision", "tip",
+    "fix", "convention", "architecture", "context", "decision", "tip", "workflow",
 })
 
 
@@ -131,7 +131,7 @@ def recall(
     category: str | None = typer.Option(  # noqa: UP007
         None, "--category", "-c",
         help="Filter by category (comma-separated). "
-             "Values: fix, convention, architecture, context, decision, tip.",
+             "Values: fix, convention, architecture, context, decision, tip, workflow.",
     ),
 ) -> None:
     """Search project memory by semantic similarity.
