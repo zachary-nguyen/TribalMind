@@ -2,6 +2,22 @@
 
 <!-- version list -->
 
+## v2.6.0 (2026-03-17)
+
+### Bug Fixes
+
+- Add missing shell completion input to init tests
+  ([`d1e7e4a`](https://github.com/zachary-nguyen/TribalMind/commit/d1e7e4a2f33b9dedcade19b30f1476bb8ac9ed5d))
+
+- Shorten test comments to satisfy line length lint
+  ([`31b2fac`](https://github.com/zachary-nguyen/TribalMind/commit/31b2fac886a3404d02078d65d7a44ab23d51dd2e))
+
+### Features
+
+- Enable and document tab-completion for CLI commands
+  ([`7310c20`](https://github.com/zachary-nguyen/TribalMind/commit/7310c20c2388f9afafe59829803f12b6505c9979))
+
+
 ## v2.5.0 (2026-03-17)
 
 ### Features
