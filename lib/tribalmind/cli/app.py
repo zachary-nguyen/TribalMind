@@ -90,5 +90,9 @@ from tribalmind.cli.agents_cmd import setup_agents  # noqa: E402
 
 app.command("setup-agents")(setup_agents)
 
+from tribalmind.cli.completion_cmd import completion_app  # noqa: E402
+
+app.add_typer(completion_app, name="completion", help="Manage shell completions.")
+
 if __name__ == "__main__":
     app()

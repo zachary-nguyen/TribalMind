@@ -197,6 +197,61 @@ tribal upgrade    # Upgrade to the latest version from PyPI
 tribal --version  # Show installed version
 ```
 
+## Shell Completions
+
+TribalMind supports tab-completion for all commands, subcommands, and options. Use the `tribal completion` subcommand to set it up.
+
+```bash
+# Show instructions for your shell
+tribal completion instructions bash
+
+# Install completions automatically (uses Typer's built-in installer)
+tribal completion install bash
+
+# Or print the completion script to stdout for manual setup
+tribal completion show bash
+```
+
+### Bash
+
+Add to your **~/.bashrc**:
+
+```bash
+eval "$(tribal --show-completion bash)"
+```
+
+Then reload: `source ~/.bashrc`
+
+### Zsh
+
+Add to your **~/.zshrc**:
+
+```zsh
+eval "$(tribal --show-completion zsh)"
+```
+
+Then reload: `source ~/.zshrc`
+
+### Fish
+
+Save the completion script:
+
+```fish
+tribal --show-completion fish > ~/.config/fish/completions/tribal.fish
+```
+
+Completions are loaded automatically on next shell start.
+
+### PowerShell
+
+Add to your **PowerShell profile** (`$PROFILE`):
+
+```powershell
+tribal --show-completion powershell | Out-String | Invoke-Expression
+```
+
+Then restart PowerShell.
+
 ## Dashboard UI
 
 TribalMind ships with a browser-based dashboard for exploring your assistants and knowledge base.
