@@ -106,9 +106,11 @@ export function getActivity(
   limit = 100,
   offset = 0,
   action = "",
+  assistantId = "",
 ): Promise<ActivityEvent[]> {
   const params = new URLSearchParams({ limit: String(limit), offset: String(offset) })
   if (action) params.set("action", action)
+  if (assistantId) params.set("assistant_id", assistantId)
   return activityRequest<ActivityEvent[]>("GET", `/activity?${params}`)
 }
 

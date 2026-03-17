@@ -4,18 +4,36 @@ from __future__ import annotations
 
 from unittest.mock import patch
 
-import pytest
 from fastapi.testclient import TestClient
-
 from tribalmind.web.server import app
 
 client = TestClient(app)
 
 SAMPLE_EVENTS = [
-    {"timestamp": "2026-03-17T10:00:00+00:00", "action": "remember", "summary": "stored a fix", "count": 1},
-    {"timestamp": "2026-03-17T09:00:00+00:00", "action": "recall", "summary": "searched for auth", "count": 3},
-    {"timestamp": "2026-03-17T08:00:00+00:00", "action": "forget", "summary": "deleted stale", "count": 1},
-    {"timestamp": "2026-03-17T07:00:00+00:00", "action": "recall", "summary": "searched for db", "count": 5},
+    {
+        "timestamp": "2026-03-17T10:00:00+00:00",
+        "action": "remember",
+        "summary": "stored a fix",
+        "count": 1,
+    },
+    {
+        "timestamp": "2026-03-17T09:00:00+00:00",
+        "action": "recall",
+        "summary": "searched for auth",
+        "count": 3,
+    },
+    {
+        "timestamp": "2026-03-17T08:00:00+00:00",
+        "action": "forget",
+        "summary": "deleted stale",
+        "count": 1,
+    },
+    {
+        "timestamp": "2026-03-17T07:00:00+00:00",
+        "action": "recall",
+        "summary": "searched for db",
+        "count": 5,
+    },
 ]
 
 

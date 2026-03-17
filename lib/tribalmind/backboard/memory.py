@@ -111,6 +111,36 @@ async def add_memory(
     )
 
 
+async def enforce_memory_limit(
+    client: BackboardClient,
+    assistant_id: str,
+    max_memories: int,
+) -> int:
+    """Delete oldest memories if the assistant exceeds *max_memories*.
+
+    Returns the number of memories pruned.
+    """
+    if max_memories <= 0:
+        return 0
+
+    entries = await list_memories(client, assistant_id)
+    excess = len(entries) - max_memories
+    if excess <= 0:
+        return 0
+
+    # Sort by created_at ascending so oldest come first.
+    # Fall back to memory_id for entries missing a timestamp.
+    entries.sort(key=lambda e: e.raw.get("created_at", ""))
+    to_delete = entries[:excess]
+
+    pruned = 0
+    for entry in to_delete:
+        if entry.memory_id:
+            await delete_memory(client, assistant_id, entry.memory_id)
+            pruned += 1
+    return pruned
+
+
 async def search_memories(
     client: BackboardClient,
     assistant_id: str,

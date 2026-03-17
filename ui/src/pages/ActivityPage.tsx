@@ -33,39 +33,54 @@ export default function ActivityPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const [filter, setFilter] = useState<ActionFilter>("all")
+  const [assistantFilter, setAssistantFilter] = useState("")
   const [assistantNames, setAssistantNames] = useState<Record<string, string>>({})
+  const [assistantList, setAssistantList] = useState<{ id: string; name: string }[]>([])
 
   // Fetch assistant id→name map once on mount
   useEffect(() => {
     listAssistants()
       .then((list) => {
         const map: Record<string, string> = {}
-        for (const a of list) map[a.assistant_id] = a.name
+        const items: { id: string; name: string }[] = []
+        for (const a of list) {
+          map[a.assistant_id] = a.name
+          items.push({ id: a.assistant_id, name: a.name })
+        }
         setAssistantNames(map)
+        setAssistantList(items.sort((a, b) => a.name.localeCompare(b.name)))
       })
       .catch(() => {}) // non-critical
   }, [])
 
-  const load = useCallback(async (actionFilter: ActionFilter = filter) => {
+  const load = useCallback(async (
+    actionFilter: ActionFilter = filter,
+    assistantId: string = assistantFilter,
+  ) => {
     setLoading(true)
     setError("")
     try {
-      const data = await getActivity(200, 0, actionFilter === "all" ? "" : actionFilter)
+      const data = await getActivity(
+        200,
+        0,
+        actionFilter === "all" ? "" : actionFilter,
+        assistantId,
+      )
       setEvents(data)
     } catch (e: any) {
       setError(e.message)
     } finally {
       setLoading(false)
     }
-  }, [filter])
+  }, [filter, assistantFilter])
 
   useEffect(() => {
     load()
   }, [])
 
   useEffect(() => {
-    load(filter)
-  }, [filter])
+    load(filter, assistantFilter)
+  }, [filter, assistantFilter])
 
   async function handleClear() {
     if (!confirm("Clear the entire activity log? This cannot be undone.")) return
@@ -121,6 +136,24 @@ export default function ActivityPage() {
             {f.charAt(0).toUpperCase() + f.slice(1)}
           </Button>
         ))}
+
+        {assistantList.length > 0 && (
+          <>
+            <div className="mx-2 h-4 w-px bg-border" />
+            <select
+              value={assistantFilter}
+              onChange={(e) => setAssistantFilter(e.target.value)}
+              className="h-7 rounded-md border border-border bg-background px-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+            >
+              <option value="">All Assistants</option>
+              {assistantList.map((a) => (
+                <option key={a.id} value={a.id}>
+                  {a.name}
+                </option>
+              ))}
+            </select>
+          </>
+        )}
       </div>
 
       {error && (

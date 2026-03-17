@@ -150,16 +150,24 @@ async def proxy_create_thread(assistant_id: str):
 # ── Activity log ─────────────────────────────────────────────────────────────
 
 @app.get("/api/activity")
-async def get_activity(limit: int = 100, offset: int = 0, action: str = ""):
+async def get_activity(
+    limit: int = 100,
+    offset: int = 0,
+    action: str = "",
+    assistant_id: str = "",
+):
     """Return recent activity events (newest first).
 
     Optional ``action`` filter (e.g. "remember", "recall", "forget").
+    Optional ``assistant_id`` filter to show only events for a specific assistant.
     """
     from tribalmind.activity import read_activity
 
     events = read_activity(limit=limit, offset=offset)
     if action:
         events = [e for e in events if e.get("action") == action]
+    if assistant_id:
+        events = [e for e in events if e.get("assistant_id") == assistant_id]
     return events
 
 
