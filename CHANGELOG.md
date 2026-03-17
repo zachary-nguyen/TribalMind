@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v2.4.1 (2026-03-17)
+
+### Bug Fixes
+
+- Improve agent prompt reliability for tribal recall/remember
+  ([`a2fcda8`](https://github.com/zachary-nguyen/TribalMind/commit/a2fcda8d1b85a3725c1cc1efd943154ea44d9beb))
+
+
 ## v2.4.0 (2026-03-16)
 
 ### Features
