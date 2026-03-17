@@ -2,6 +2,19 @@
 
 <!-- version list -->
 
+## v2.9.0 (2026-03-17)
+
+### Bug Fixes
+
+- Avoid curly-brace template errors in prompts and harden LLM response parsing
+  ([`7bdc26f`](https://github.com/zachary-nguyen/TribalMind/commit/7bdc26f618907abf44cc3e90cde9039756bd6e48))
+
+### Features
+
+- Add workflow category for storing multi-step processes
+  ([`d17f682`](https://github.com/zachary-nguyen/TribalMind/commit/d17f682b923ee54c2a383bad4bbed43ca34afb13))
+
+
 ## v2.8.0 (2026-03-17)
 
 ### Features
