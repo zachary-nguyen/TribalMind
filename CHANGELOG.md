@@ -2,6 +2,20 @@
 
 <!-- version list -->
 
+## v2.8.0 (2026-03-17)
+
+### Features
+
+- Add activity log page to web dashboard
+  ([`10669bf`](https://github.com/zachary-nguyen/TribalMind/commit/10669bf9a9d0071491e26efc0b1ed1a700552dfe))
+
+- Add assistant filter to activity log and fix lint issues
+  ([`a477eca`](https://github.com/zachary-nguyen/TribalMind/commit/a477eca761f73c04a892a0d8fa965c4a0bb324bc))
+
+- Show target assistant name in activity log
+  ([`5307f43`](https://github.com/zachary-nguyen/TribalMind/commit/5307f431fef37aa64451a6d4e6576381cea75f7f))
+
+
 ## v2.7.0 (2026-03-17)
 
 ### Bug Fixes
