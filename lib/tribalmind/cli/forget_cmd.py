@@ -68,7 +68,13 @@ def forget(
             asyncio.run(_delete_by_id())
 
             from tribalmind.activity import log_activity
-            log_activity("forget", f"deleted memory {memory_id}", memory_id=memory_id, count=1)
+            log_activity(
+                "forget",
+                f"deleted memory {memory_id}",
+                memory_id=memory_id,
+                count=1,
+                assistant_id=assistant_id or "",
+            )
 
             if json_output:
                 typer.echo(json.dumps({"deleted": [memory_id]}))
@@ -90,7 +96,12 @@ def forget(
             deleted = asyncio.run(_clear())
 
             from tribalmind.activity import log_activity
-            log_activity("forget", f"cleared all memories ({deleted})", count=deleted)
+            log_activity(
+                "forget",
+                f"cleared all memories ({deleted})",
+                count=deleted,
+                assistant_id=assistant_id or "",
+            )
 
             if json_output:
                 typer.echo(json.dumps({"deleted_count": deleted}))
@@ -143,6 +154,7 @@ def forget(
             f"deleted {len(deleted_ids)} memories matching: {query_text}",
             query=query_text,
             count=len(deleted_ids),
+            assistant_id=assistant_id or "",
         )
 
         if json_output:

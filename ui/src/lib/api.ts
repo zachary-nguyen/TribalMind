@@ -85,6 +85,7 @@ export interface ActivityEvent {
   memory_id?: string
   count?: number
   source?: string
+  assistant_id?: string
   [key: string]: unknown
 }
 

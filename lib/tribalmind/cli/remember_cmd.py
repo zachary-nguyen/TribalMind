@@ -194,10 +194,13 @@ def remember(
         parsed = asyncio.run(_store_memory(input_text))
 
     from tribalmind.activity import log_activity
+    from tribalmind.config.settings import get_settings
+
     log_activity(
         "remember",
         parsed.get("content", input_text[:120]),
         query=input_text,
+        assistant_id=get_settings().project_assistant_id or "",
         metadata={
             "category": parsed.get("category", "context"),
             "subject": parsed.get("subject", ""),

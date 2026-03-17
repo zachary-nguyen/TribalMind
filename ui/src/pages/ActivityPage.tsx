@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from "react"
 import { Activity, RefreshCw, XCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { type ActivityEvent, getActivity, clearActivity } from "@/lib/api"
+import { type ActivityEvent, getActivity, clearActivity, listAssistants } from "@/lib/api"
 
 const ACTION_FILTERS = ["all", "remember", "recall", "forget"] as const
 type ActionFilter = (typeof ACTION_FILTERS)[number]
@@ -33,6 +33,18 @@ export default function ActivityPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const [filter, setFilter] = useState<ActionFilter>("all")
+  const [assistantNames, setAssistantNames] = useState<Record<string, string>>({})
+
+  // Fetch assistant id→name map once on mount
+  useEffect(() => {
+    listAssistants()
+      .then((list) => {
+        const map: Record<string, string> = {}
+        for (const a of list) map[a.assistant_id] = a.name
+        setAssistantNames(map)
+      })
+      .catch(() => {}) // non-critical
+  }, [])
 
   const load = useCallback(async (actionFilter: ActionFilter = filter) => {
     setLoading(true)
@@ -146,6 +158,11 @@ export default function ActivityPage() {
                       </span>
                       {evt.source && (
                         <Badge variant="secondary">{evt.source}</Badge>
+                      )}
+                      {evt.assistant_id && (
+                        <span className="text-xs text-muted-foreground">
+                          → {assistantNames[evt.assistant_id] || evt.assistant_id.slice(0, 12)}
+                        </span>
                       )}
                     </div>
 

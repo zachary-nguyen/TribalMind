@@ -303,6 +303,7 @@ def recall(
         f"searched: {query_text}",
         query=query_text,
         count=len(results),
+        assistant_id=assistant_id or "",
     )
 
     if json_output:
