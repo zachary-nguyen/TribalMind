@@ -39,7 +39,6 @@ class TestRecallCommand:
     @patch("tribalmind.config.settings.get_settings")
     def test_recall_basic(self, mock_settings, mock_search):
         mock_settings.return_value.project_assistant_id = "ast-123"
-        mock_settings.return_value.team_sharing_enabled = False
         mock_settings.return_value.org_assistant_id = None
         mock_search.return_value = [_make_memory()]
 
@@ -52,7 +51,6 @@ class TestRecallCommand:
     @patch("tribalmind.config.settings.get_settings")
     def test_recall_json_output(self, mock_settings, mock_search):
         mock_settings.return_value.project_assistant_id = "ast-123"
-        mock_settings.return_value.team_sharing_enabled = False
         mock_settings.return_value.org_assistant_id = None
         mock_search.return_value = [_make_memory()]
 
@@ -67,7 +65,6 @@ class TestRecallCommand:
     @patch("tribalmind.config.settings.get_settings")
     def test_recall_no_results(self, mock_settings, mock_search):
         mock_settings.return_value.project_assistant_id = "ast-123"
-        mock_settings.return_value.team_sharing_enabled = False
         mock_settings.return_value.org_assistant_id = None
         mock_search.return_value = []
 
@@ -91,7 +88,6 @@ class TestRecallCommand:
     @patch("tribalmind.config.settings.get_settings")
     def test_recall_stdin(self, mock_settings, mock_search):
         mock_settings.return_value.project_assistant_id = "ast-123"
-        mock_settings.return_value.team_sharing_enabled = False
         mock_settings.return_value.org_assistant_id = None
         mock_search.return_value = [_make_memory()]
 
