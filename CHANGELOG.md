@@ -2,6 +2,19 @@
 
 <!-- version list -->
 
+## v2.7.0 (2026-03-17)
+
+### Bug Fixes
+
+- Convert Backboard distance score to similarity in recall
+  ([`2d81be4`](https://github.com/zachary-nguyen/TribalMind/commit/2d81be48658868627c2b7040d90e3e88907e405b))
+
+### Features
+
+- Add --category filter to tribal recall
+  ([`e1e3c79`](https://github.com/zachary-nguyen/TribalMind/commit/e1e3c79b0cf0648d6ff34f9f9ba22f25f1928edb))
+
+
 ## v2.6.0 (2026-03-17)
 
 ### Bug Fixes
