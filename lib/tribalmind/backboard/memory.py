@@ -11,9 +11,14 @@ from typing import Any
 
 from tribalmind.backboard.client import BackboardClient
 
+# Valid memory categories.
+VALID_CATEGORIES = frozenset({
+    "fix", "convention", "architecture", "context", "decision", "tip", "workflow",
+})
+
 # Canonical schema for memory content. All memories must conform to this.
 MEMORY_SCHEMA = {
-    "category": "one of: fix, convention, architecture, context, decision, tip",
+    "category": "one of: fix, convention, architecture, context, decision, tip, workflow",
     "subject": "what this is about (e.g. 'auth module', 'CI pipeline', 'numpy 1.26')",
     "content": "the actual knowledge — insight, fix, pattern, or description",
 }

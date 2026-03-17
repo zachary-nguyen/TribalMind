@@ -10,11 +10,9 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
-console = Console()
+from tribalmind.backboard.memory import VALID_CATEGORIES
 
-VALID_CATEGORIES = frozenset({
-    "fix", "convention", "architecture", "context", "decision", "tip",
-})
+console = Console()
 
 
 def _filter_by_category(results: list, categories: set[str]) -> list:
@@ -131,7 +129,7 @@ def recall(
     category: str | None = typer.Option(  # noqa: UP007
         None, "--category", "-c",
         help="Filter by category (comma-separated). "
-             "Values: fix, convention, architecture, context, decision, tip.",
+             "Values: fix, convention, architecture, context, decision, tip, workflow.",
     ),
 ) -> None:
     """Search project memory by semantic similarity.

@@ -76,12 +76,14 @@ class TestRememberCommand:
 
 
 class TestParsePrompt:
-    def test_prompt_has_schema_placeholder(self):
-        assert "{schema}" in _PARSE_PROMPT
-
     def test_prompt_has_text_placeholder(self):
-        filled = _PARSE_PROMPT.format(text="test input", schema="{}")
+        filled = _PARSE_PROMPT.format(text="test input")
         assert "test input" in filled
+
+    def test_prompt_describes_schema_fields(self):
+        assert "category" in _PARSE_PROMPT
+        assert "subject" in _PARSE_PROMPT
+        assert "content" in _PARSE_PROMPT
 
     def test_prompt_documents_categories(self):
         assert "fix" in _PARSE_PROMPT
@@ -90,3 +92,4 @@ class TestParsePrompt:
         assert "context" in _PARSE_PROMPT
         assert "decision" in _PARSE_PROMPT
         assert "tip" in _PARSE_PROMPT
+        assert "workflow" in _PARSE_PROMPT
