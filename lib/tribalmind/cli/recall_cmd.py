@@ -12,6 +12,15 @@ from rich.table import Table
 
 console = Console()
 
+VALID_CATEGORIES = frozenset({
+    "fix", "convention", "architecture", "context", "decision", "tip",
+})
+
+
+def _filter_by_category(results: list, categories: set[str]) -> list:
+    """Filter memory entries to only those matching *categories*."""
+    return [r for r in results if r.category in categories]
+
 
 async def _list_all(assistant_id: str) -> list:
     """List all memories for an assistant (no search, no RAG cost)."""
@@ -119,6 +128,11 @@ def recall(
         False, "--all", "-a",
         help="Search across ALL repos/assistants in the account (cross-repo).",
     ),
+    category: str | None = typer.Option(  # noqa: UP007
+        None, "--category", "-c",
+        help="Filter by category (comma-separated). "
+             "Values: fix, convention, architecture, context, decision, tip.",
+    ),
 ) -> None:
     """Search project memory by semantic similarity.
 
@@ -139,6 +153,21 @@ def recall(
     from tribalmind.config.settings import get_settings
 
     settings = get_settings()
+
+    # Parse and validate --category
+    cat_filter: set[str] | None = None
+    if category:
+        cat_filter = {c.strip().lower() for c in category.split(",")}
+        invalid = cat_filter - VALID_CATEGORIES
+        if invalid:
+            console.print(
+                f"[red]Invalid category: {', '.join(sorted(invalid))}[/red]"
+            )
+            console.print(
+                f"[dim]Valid categories: {', '.join(sorted(VALID_CATEGORIES))}[/dim]"
+            )
+            raise typer.Exit(1)
+
     assistant_id = settings.project_assistant_id
     if not assistant_id and not search_all:
         console.print("[red]No project assistant configured.[/red]")
@@ -152,6 +181,9 @@ def recall(
         except BackboardError as e:
             console.print(f"[red]API error {e.status_code}:[/red] {e.detail}")
             raise typer.Exit(1)
+
+        if cat_filter:
+            results = _filter_by_category(results, cat_filter)
 
         if json_output:
             output = {
@@ -200,6 +232,13 @@ def recall(
         except BackboardError as e:
             console.print(f"[red]API error {e.status_code}:[/red] {e.detail}")
             raise typer.Exit(1)
+
+        if cat_filter:
+            grouped = [
+                (name, _filter_by_category(results, cat_filter))
+                for name, results in grouped
+            ]
+            grouped = [(name, results) for name, results in grouped if results]
 
         total = sum(len(results) for _, results in grouped)
 
@@ -254,6 +293,9 @@ def recall(
     except BackboardError as e:
         console.print(f"[red]API error {e.status_code}:[/red] {e.detail}")
         raise typer.Exit(1)
+
+    if cat_filter:
+        results = _filter_by_category(results, cat_filter)
 
     from tribalmind.activity import log_activity
     log_activity(
