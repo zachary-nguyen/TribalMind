@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v2.5.0 (2026-03-17)
+
+### Features
+
+- Auto-update CLAUDE.md and agents.md on tribal upgrade
+  ([`dc3fa8d`](https://github.com/zachary-nguyen/TribalMind/commit/dc3fa8dbb963d1a292845cc5a7255ddb7a181c33))
+
+
 ## v2.4.1 (2026-03-17)
 
 ### Bug Fixes
