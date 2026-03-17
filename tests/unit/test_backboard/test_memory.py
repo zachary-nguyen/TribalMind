@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 
+import pytest
 from tribalmind.backboard.memory import MEMORY_SCHEMA, encode_memory, parse_memory
 
 
@@ -75,7 +76,8 @@ class TestParseMemory:
         raw = {"id": "mem-123", "score": 0.88}
         entry = parse_memory(content, raw=raw)
         assert entry.memory_id == "mem-123"
-        assert entry.relevance_score == 0.88
+        # score is a distance; relevance = 1 - distance
+        assert entry.relevance_score == pytest.approx(0.12)
         assert entry.subject == "API routes"
 
     def test_parse_legacy_json_format(self):
