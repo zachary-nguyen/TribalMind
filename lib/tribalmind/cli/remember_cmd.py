@@ -19,7 +19,7 @@ import sys
 import typer
 from rich.console import Console
 
-from tribalmind.backboard.memory import MEMORY_SCHEMA
+from tribalmind.backboard.memory import VALID_CATEGORIES
 
 logger = logging.getLogger(__name__)
 console = Console()
@@ -30,34 +30,65 @@ a structured JSON object for storage in a team knowledge base.
 
 Text: {text}
 
-Respond with ONLY a JSON object (no markdown, no explanation) conforming to
-this schema:
-{schema}
+Respond with ONLY a JSON object (no markdown, no explanation) with these three
+fields:
+  "category" — one of the values listed below
+  "subject"  — short label for what this knowledge is about
+  "content"  — the actual insight, fix, pattern, or description
 
-Categories:
-- "fix" = error pattern, workaround, or gotcha
-- "convention" = codebase pattern, naming rule, or style decision
-- "architecture" = how modules connect, why things are built a certain way
-- "context" = project description, team info, onboarding knowledge
-- "decision" = trade-off considered, what was chosen and why
-- "tip" = best practice, useful trick, or shortcut
-- "workflow" = multi-step process, runbook, or repeatable procedure
+Categories (pick the single best fit):
+  fix          = error pattern, workaround, or gotcha
+  convention   = codebase pattern, naming rule, or style decision
+  architecture = how modules connect, why things are built a certain way
+  context      = project description, team info, onboarding knowledge
+  decision     = trade-off considered, what was chosen and why
+  tip          = best practice, useful trick, or shortcut
+  workflow     = multi-step process, runbook, or repeatable procedure
 
 Rules:
-- subject should be a short label for what this knowledge is about
+- subject should be a short label (e.g. "auth module", "CI pipeline")
 - content is the most important field — always extract the key insight
 - If the text is already structured, preserve the original meaning exactly"""
 
 
 def _parse_llm_response(content: str) -> dict | None:
-    """Extract JSON from an LLM response, stripping markdown fences."""
+    """Extract JSON from an LLM response, stripping markdown fences.
+
+    Handles multiple response formats:
+    - Plain JSON string
+    - Markdown-fenced JSON
+    - Gemini-style content blocks: [{"type": "text", "text": "..."}]
+    """
     if not content:
         return None
-    cleaned = re.sub(r"^```(?:json)?\s*\n?", "", content.strip())
+
+    cleaned = content.strip()
+
+    # Handle content-block arrays: [{"type":"text","text":"..."}]
+    # Backboard may return these as Python repr strings (single-quoted) rather
+    # than JSON, so try ast.literal_eval as a fallback.
+    if cleaned.startswith("["):
+        import ast
+
+        for loader in (json.loads, ast.literal_eval):
+            try:
+                maybe_list = loader(cleaned)
+                if isinstance(maybe_list, list) and maybe_list:
+                    first = maybe_list[0]
+                    if isinstance(first, dict) and "text" in first:
+                        cleaned = first["text"].strip()
+                        break
+            except (json.JSONDecodeError, ValueError, TypeError, SyntaxError):
+                continue
+
+    # Strip markdown fences
+    cleaned = re.sub(r"^```(?:json)?\s*\n?", "", cleaned)
     cleaned = re.sub(r"\n?```$", "", cleaned)
     cleaned = cleaned.strip()
+
     try:
-        return json.loads(cleaned)
+        result = json.loads(cleaned)
+        return result if isinstance(result, dict) else None
     except json.JSONDecodeError:
         return None
 
@@ -73,8 +104,7 @@ async def _parse_with_llm(text: str) -> dict | None:
     if not assistant_id:
         return None
 
-    schema_str = json.dumps(MEMORY_SCHEMA, indent=2)
-    prompt = _PARSE_PROMPT.format(text=text, schema=schema_str)
+    prompt = _PARSE_PROMPT.format(text=text)
     thread_id = None
 
     async with create_client() as client:
@@ -90,6 +120,7 @@ async def _parse_with_llm(text: str) -> dict | None:
         )
 
         # Extract content from response
+        logger.debug("LLM raw response: %s", response)
         content = response.get("content", "")
         if not content:
             messages = response.get("messages", [])
@@ -97,6 +128,7 @@ async def _parse_with_llm(text: str) -> dict | None:
                 last = messages[-1] if isinstance(messages, list) else messages
                 content = last.get("content", "") if isinstance(last, dict) else str(last)
 
+        logger.debug("Extracted content for parsing: %r", content)
         result = _parse_llm_response(content)
 
         if thread_id:
@@ -126,11 +158,21 @@ async def _store_memory(text: str) -> dict:
 
     if not parsed or not parsed.get("content"):
         # Fallback: store raw text as a 'context' memory
+        logger.debug("LLM parsing failed or returned no content; using fallback")
+        console.print(
+            "[yellow]LLM parsing failed — storing as raw context.[/yellow]"
+        )
         parsed = {
             "category": "context",
             "subject": "",
             "content": text,
         }
+    else:
+        # Validate the category returned by the LLM
+        cat = parsed.get("category", "").lower().strip()
+        if cat not in VALID_CATEGORIES:
+            logger.debug("LLM returned invalid category %r; defaulting to 'context'", cat)
+            parsed["category"] = "context"
 
     encoded = encode_memory(
         parsed["category"],

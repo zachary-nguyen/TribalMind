@@ -7,7 +7,6 @@ An optional org-level assistant is used for team-wide knowledge sharing.
 from __future__ import annotations
 
 import hashlib
-import json
 import logging
 from typing import Any
 
@@ -166,14 +165,19 @@ async def get_or_create_project_assistant(
     identifier = _get_project_identifier(project_root)
     from tribalmind.backboard.memory import MEMORY_SCHEMA
 
-    schema_str = json.dumps(MEMORY_SCHEMA, indent=2)
+    # Build schema description WITHOUT curly braces — Backboard's LangChain
+    # ChatPromptTemplate treats {word} as template variables, so raw JSON in
+    # the system prompt breaks LLM invocation.
+    schema_lines = "\n".join(
+        f"  {key}: {value}" for key, value in MEMORY_SCHEMA.items()
+    )
     system_prompt = (
         f"You are a developer knowledge agent for project '{identifier}'. "
         "Store and retrieve developer knowledge including: error patterns and fixes, "
         "codebase conventions and patterns, tips and best practices, architectural "
         "decisions, environment quirks, and any other knowledge that helps the team "
         "work effectively.\n\n"
-        f"All memories conform to this schema:\n{schema_str}"
+        f"All memories conform to this schema:\n{schema_lines}"
     )
     return await create_assistant(
         client,

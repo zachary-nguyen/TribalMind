@@ -10,11 +10,9 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
-console = Console()
+from tribalmind.backboard.memory import VALID_CATEGORIES
 
-VALID_CATEGORIES = frozenset({
-    "fix", "convention", "architecture", "context", "decision", "tip", "workflow",
-})
+console = Console()
 
 
 def _filter_by_category(results: list, categories: set[str]) -> list:
