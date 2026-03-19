@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v2.10.0 (2026-03-19)
+
+### Features
+
+- Show source project on tribal recall --all results
+  ([`be56e8c`](https://github.com/zachary-nguyen/TribalMind/commit/be56e8c12a1e36271059272ea695231b07b7165b))
+
+
 ## v2.9.0 (2026-03-17)
 
 ### Bug Fixes
