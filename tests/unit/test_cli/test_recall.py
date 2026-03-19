@@ -173,3 +173,72 @@ class TestRecallCategoryFilter:
         assert result.exit_code == 0
         assert "imports" in result.output
         assert "numpy" not in result.output
+
+
+class TestRecallAllProjectColumn:
+    """Tests for --all showing project name in results (issue #21)."""
+
+    @patch("tribalmind.cli.recall_cmd._search_all_assistants", new_callable=AsyncMock)
+    @patch("tribalmind.config.settings.get_settings")
+    def test_all_json_has_project_field(self, mock_settings, mock_search_all):
+        mock_settings.return_value.project_assistant_id = "ast-123"
+        mock_settings.return_value.org_assistant_id = None
+        mock_search_all.return_value = [
+            ("api-service", [_make_memory(subject="httpx timeout", relevance_score=0.91)]),
+            ("mobile-app", [_make_memory(subject="async calls", relevance_score=0.87)]),
+        ]
+
+        result = runner.invoke(app, ["recall", "--all", "--json", "timeout"])
+        assert result.exit_code == 0
+        data = _extract_json(result.output)
+        assert data["scope"] == "all"
+        assert data["count"] == 2
+        # Results should be sorted by relevance descending
+        assert data["results"][0]["project"] == "api-service"
+        assert data["results"][0]["relevance"] == 0.91
+        assert data["results"][1]["project"] == "mobile-app"
+        assert data["results"][1]["relevance"] == 0.87
+
+    @patch("tribalmind.cli.recall_cmd._search_all_assistants", new_callable=AsyncMock)
+    @patch("tribalmind.config.settings.get_settings")
+    def test_all_table_shows_project_column(self, mock_settings, mock_search_all):
+        mock_settings.return_value.project_assistant_id = "ast-123"
+        mock_settings.return_value.org_assistant_id = None
+        mock_search_all.return_value = [
+            ("api-service", [_make_memory(subject="httpx timeout", relevance_score=0.91)]),
+            ("TribalMind", [_make_memory(subject="backboard", relevance_score=0.83)]),
+        ]
+
+        result = runner.invoke(app, ["recall", "--all", "timeout"])
+        assert result.exit_code == 0
+        assert "api-service" in result.output
+        assert "TribalMind" in result.output
+        assert "Project" in result.output
+        assert "2 result(s) across 2 repo(s)" in result.output
+
+    @patch("tribalmind.cli.recall_cmd._search_all_assistants", new_callable=AsyncMock)
+    @patch("tribalmind.config.settings.get_settings")
+    def test_all_results_sorted_by_relevance(self, mock_settings, mock_search_all):
+        mock_settings.return_value.project_assistant_id = "ast-123"
+        mock_settings.return_value.org_assistant_id = None
+        mock_search_all.return_value = [
+            ("low-repo", [_make_memory(subject="low", relevance_score=0.50)]),
+            ("high-repo", [_make_memory(subject="high", relevance_score=0.95)]),
+        ]
+
+        result = runner.invoke(app, ["recall", "--all", "--json", "query"])
+        assert result.exit_code == 0
+        data = _extract_json(result.output)
+        assert data["results"][0]["project"] == "high-repo"
+        assert data["results"][1]["project"] == "low-repo"
+
+    @patch("tribalmind.cli.recall_cmd._search_all_assistants", new_callable=AsyncMock)
+    @patch("tribalmind.config.settings.get_settings")
+    def test_all_no_results(self, mock_settings, mock_search_all):
+        mock_settings.return_value.project_assistant_id = "ast-123"
+        mock_settings.return_value.org_assistant_id = None
+        mock_search_all.return_value = []
+
+        result = runner.invoke(app, ["recall", "--all", "nonexistent"])
+        assert result.exit_code == 0
+        assert "No memories found" in result.output
