@@ -65,43 +65,62 @@ async def _search_all_assistants(query: str, limit: int) -> list[tuple[str, list
         return all_results
 
 
-def _memory_to_dict(r) -> dict:
+def _memory_to_dict(r, *, project: str | None = None) -> dict:
     """Convert a MemoryEntry to a JSON-serializable dict."""
-    return {
+    d: dict = {
         "memory_id": r.memory_id,
         "category": r.category,
         "subject": r.subject,
         "content": r.content,
     }
+    if project is not None:
+        d["project"] = project
+    return d
 
 
-def _memory_to_search_dict(r) -> dict:
+def _memory_to_search_dict(r, *, project: str | None = None) -> dict:
     """Convert a MemoryEntry to a JSON-serializable dict with relevance."""
-    d = _memory_to_dict(r)
+    d = _memory_to_dict(r, project=project)
     d["relevance"] = r.relevance_score
     return d
 
 
-def _make_table(title: str, *, show_relevance: bool = False) -> Table:
+def _make_table(
+    title: str,
+    *,
+    show_relevance: bool = False,
+    show_project: bool = False,
+) -> Table:
     """Create a styled table for memory display."""
     table = Table(title=title, show_lines=True)
+    if show_relevance:
+        table.add_column("Rel", style="dim", width=6, justify="right")
+    if show_project:
+        table.add_column("Project", style="cyan", max_width=20, no_wrap=True)
     table.add_column("Cat", style="#a78bfa", width=12)
     table.add_column("Subject", style="#34d399", width=18)
     table.add_column("Content", style="white", ratio=1)
-    if show_relevance:
-        table.add_column("Rel", style="dim", width=6, justify="right")
     return table
 
 
-def _add_row(table: Table, r, *, show_relevance: bool = False) -> None:
+def _add_row(
+    table: Table,
+    r,
+    *,
+    show_relevance: bool = False,
+    project: str | None = None,
+) -> None:
     """Add a memory entry as a row to a table."""
-    cols = [
+    cols: list[str] = []
+    if show_relevance:
+        cols.append(f"{r.relevance_score:.0%}" if r.relevance_score else "-")
+    if project is not None:
+        cols.append(project)
+    cols.extend([
         r.category or "-",
         r.subject or "-",
         r.content or r.raw_content[:80],
-    ]
-    if show_relevance:
-        cols.append(f"{r.relevance_score:.0%}" if r.relevance_score else "-")
+    ])
     table.add_row(*cols)
 
 
@@ -249,39 +268,40 @@ def recall(
             metadata={"scope": "all", "repos": len(grouped)},
         )
 
+        # Flatten grouped results and attach project name for display
+        flat: list[tuple[str, object]] = []
+        for name, results in grouped:
+            for r in results:
+                flat.append((name, r))
+        # Sort by relevance descending
+        flat.sort(key=lambda t: t[1].relevance_score or 0, reverse=True)
+
         if json_output:
             output = {
                 "query": query_text,
                 "scope": "all",
-                "repos": [
-                    {
-                        "assistant": name,
-                        "count": len(results),
-                        "results": [_memory_to_search_dict(r) for r in results],
-                    }
-                    for name, results in grouped
+                "count": total,
+                "results": [
+                    _memory_to_search_dict(r, project=name)
+                    for name, r in flat
                 ],
             }
             typer.echo(json.dumps(output, indent=2))
             return
 
-        if not grouped:
+        if not flat:
             console.print("[dim]No memories found across any repo.[/dim]")
             return
 
-        for name, results in grouped:
-            display_name = name
+        table = _make_table(
+            f"Memories matching: {query_text}",
+            show_relevance=True,
+            show_project=True,
+        )
+        for name, r in flat:
+            _add_row(table, r, show_relevance=True, project=name)
 
-            table = _make_table(
-                f"[#a78bfa]{display_name}[/] — {len(results)} result(s)",
-                show_relevance=True,
-            )
-            for r in results:
-                _add_row(table, r, show_relevance=True)
-
-            console.print(table)
-            console.print()
-
+        console.print(table)
         console.print(f"[dim]{total} result(s) across {len(grouped)} repo(s)[/dim]")
         return
 
