@@ -25,13 +25,14 @@ SECRET_KEYS = {
 
 # Settings fields that can be modified via `tribal config set`
 CONFIGURABLE_KEYS = {
+    "provider": "provider",
     "backboard-base-url": "backboard_base_url",
     "llm-provider": "llm_provider",
     "model-name": "model_name",
     "project-assistant-id": "project_assistant_id",
 }
 
-REDACTED_FIELDS = {"backboard_api_key"}
+REDACTED_FIELDS = {"backboard_api_key", "mem0_api_key"}
 
 
 def _get_config_path() -> Path:
@@ -193,8 +194,7 @@ def config_clear_memory(
     """Clear ALL memories for an assistant."""
     import asyncio
 
-    from tribalmind.backboard.client import BackboardError, create_client
-    from tribalmind.backboard.memory import clear_memories
+    from tribalmind.providers import get_provider
 
     settings = TribalSettings()
     target_id = assistant_id or settings.project_assistant_id
@@ -212,15 +212,20 @@ def config_clear_memory(
             raise typer.Abort()
 
     async def _clear():
-        async with create_client() as client:
-            return await clear_memories(client, target_id)
+        provider = get_provider()
+        async with provider:
+            return await provider.clear()
 
     try:
         deleted = asyncio.run(_clear())
         console.print(f"[green]Cleared[/green] {deleted} memories from assistant {target_id}")
-    except BackboardError as e:
-        console.print(f"[red]API error {e.status_code}:[/red] {e.detail}")
-        raise typer.Exit(1)
+    except Exception as e:
+        from tribalmind.backboard.client import BackboardError
+
+        if isinstance(e, BackboardError):
+            console.print(f"[red]API error {e.status_code}:[/red] {e.detail}")
+            raise typer.Exit(1)
+        raise
 
 
 @config_app.command("debug-key")

@@ -24,6 +24,7 @@ dependencies = [
     "questionary>=2.1",
     "fastapi>=0.110",
     "uvicorn[standard]>=0.29",
+    "mem0ai>=0.1",
 ]
 
 [project.optional-dependencies]

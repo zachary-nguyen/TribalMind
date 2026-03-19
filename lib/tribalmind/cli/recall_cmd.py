@@ -22,20 +22,20 @@ def _filter_by_category(results: list, categories: set[str]) -> list:
 
 async def _list_all(assistant_id: str) -> list:
     """List all memories for an assistant (no search, no RAG cost)."""
-    from tribalmind.backboard.client import create_client
-    from tribalmind.backboard.memory import list_memories
+    from tribalmind.providers import get_provider
 
-    async with create_client() as client:
-        return await list_memories(client, assistant_id)
+    provider = get_provider()
+    async with provider:
+        return await provider.list_all()
 
 
 async def _search(assistant_id: str, query: str, limit: int) -> list:
     """Search memories for a single assistant."""
-    from tribalmind.backboard.client import create_client
-    from tribalmind.backboard.memory import search_memories
+    from tribalmind.providers import get_provider
 
-    async with create_client() as client:
-        return await search_memories(client, assistant_id, query, limit=limit)
+    provider = get_provider()
+    async with provider:
+        return await provider.search(query, limit=limit)
 
 
 async def _search_all_assistants(query: str, limit: int) -> list[tuple[str, list]]:

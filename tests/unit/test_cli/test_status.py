@@ -23,6 +23,7 @@ class TestStatusCommand:
     def test_status_configured(self, mock_settings, mock_count):
         mock_settings.return_value.project_assistant_id = "ast-123"
         mock_settings.return_value.project_root = "/my/project"
+        mock_settings.return_value.provider = "backboard"
         mock_settings.return_value.llm_provider = "anthropic"
         mock_settings.return_value.model_name = "claude-sonnet-4-20250514"
         mock_count.return_value = 42
@@ -36,6 +37,7 @@ class TestStatusCommand:
     def test_status_not_configured(self, mock_settings):
         mock_settings.return_value.project_assistant_id = None
         mock_settings.return_value.project_root = "/my/project"
+        mock_settings.return_value.provider = "backboard"
         mock_settings.return_value.llm_provider = "anthropic"
         mock_settings.return_value.model_name = "claude-sonnet-4-20250514"
 
@@ -48,6 +50,7 @@ class TestStatusCommand:
     def test_status_json(self, mock_settings, mock_count):
         mock_settings.return_value.project_assistant_id = "ast-123"
         mock_settings.return_value.project_root = "/my/project"
+        mock_settings.return_value.provider = "backboard"
         mock_settings.return_value.llm_provider = "anthropic"
         mock_settings.return_value.model_name = "claude-sonnet-4-20250514"
         mock_count.return_value = 10
@@ -58,3 +61,4 @@ class TestStatusCommand:
         assert data["configured"] is True
         assert data["memory_count"] == 10
         assert data["assistant_id"] == "ast-123"
+        assert data["provider"] == "backboard"
