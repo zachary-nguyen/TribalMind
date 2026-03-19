@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v2.11.0 (2026-03-19)
+
+### Features
+
+- Improve agent memory prompts for more reliable activation
+  ([`b9bb0cb`](https://github.com/zachary-nguyen/TribalMind/commit/b9bb0cbda185adc1b47a0630903b3ce164d26619))
+
+
 ## v2.10.0 (2026-03-19)
 
 ### Features
