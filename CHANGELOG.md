@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v2.12.0 (2026-03-19)
+
+### Features
+
+- Pluggable memory provider abstraction (Backboard, Mem0, and beyond)
+  ([`bb520d6`](https://github.com/zachary-nguyen/TribalMind/commit/bb520d611cca53fffb98bd21df82f3fe7b9446ad))
+
+
 ## v2.11.0 (2026-03-19)
 
 ### Features
