@@ -17,105 +17,98 @@ MARKER_END = "<!-- tribalmind:end -->"
 # ── Shared building blocks ──────────────────────────────────────────────────
 
 _RECALL_SECTION = """\
-### When to recall
+### FIRST STEP: Check shared memory
 
-**Run `tribal recall` BEFORE investigating issues or exploring unfamiliar \
-areas.** Check shared memory first — it often already has the answer and saves \
-significant time.
+**Before you read code, run commands, or start investigating, run \
+`tribal recall`.** This is your first action on every task — not optional, \
+not situational.
 
-**Recall when:**
-1. The user asks **why** something works a certain way
-2. The user reports a **bug, error, or unexpected behavior**
-3. You need context about a **past decision, convention, or known issue**
-4. You are **stuck or unsure** about the right approach
-5. You are starting work in an **unfamiliar part of the codebase**
-6. The user asks **"how do I…"** or you need to perform a **multi-step process** \
-— check for stored workflows first
+**Anti-pattern:** Do NOT jump straight into `grep`, `find`, or reading files \
+to investigate an issue. Check memory first — the answer may already be there.
+
+**Query tip:** Include both what the task is *about* and what *kind of work* \
+it is (e.g., `"auth token refresh | deployment process"`). This surfaces both \
+relevant knowledge and stored workflows for that type of task.
 
 ```bash
-tribal recall --json "<describe what you need context on>"
+tribal recall --json "<topic and task type>"
 ```
 
-**If recall returns no results**, or the query references a term you don't \
-recognize in this repo, **automatically retry with `--all`** (cross-repo \
-search). Do not ask the user — just do it.
+If recall returns nothing relevant, retry across all repos:
 
 ```bash
 tribal recall --all --json "<query>"
-```"""
-
-_REMEMBER_SECTION = """\
-### MANDATORY: Remember after learning
-
-**Rule: After completing any task where you learned something non-obvious, \
-run `tribal remember` immediately — before responding to the user.**
-
-**Run `tribal remember` when any of these happen:**
-1. You **fix a bug** and the root cause was not obvious
-2. The user explains **why** a config value, flag, or pattern exists
-3. You discover a **workaround, gotcha, or surprising behavior**
-4. You learn **how modules connect** or why something is built a certain way
-5. You encounter **environment, setup, or config quirks**
-6. The user teaches or you discover a **multi-step process, runbook, or deployment \
-procedure** — store it as a workflow
-
-**Skip** trivial changes, obvious fixes, or things already clear from the code.
-
-```bash
-tribal remember "<what you learned — be specific and include context>"
 ```
 
-After storing, **tell the user** what was saved (e.g. "Saved to project \
-memory: <summary>")."""
+Skip recall when the task is self-contained and unlikely to benefit from \
+prior context — e.g., simple refactors, renaming, formatting, adding types, \
+writing new code from a clear spec, or general questions unrelated to the project."""
+
+_REMEMBER_SECTION = """\
+### LAST STEP: Save what you learned
+
+**After completing a task, check: did you discover WHY something works the way \
+it does? If yes, run `tribal remember` before responding.**
+
+```bash
+tribal remember "<what you learned — be specific, include the why>"
+```
+
+Examples of what to save:
+- Root cause of a bug (not the fix itself — the WHY)
+- Reasoning behind a config value, pattern, or architecture choice
+- A workaround or gotcha that is not obvious from the code
+- How components connect in ways that surprised you
+
+Do NOT save: obvious fixes, things already clear from reading the code, or \
+trivial changes.
+
+After saving, tell the user: "Saved to project memory: <summary>."."""
 
 _REFERENCE_SECTION = """\
-### Commands
+### Quick reference
 
-| Command | Description |
-|---------|-------------|
-| `tribal recall "<query>"` | Search memory by semantic similarity |
-| `tribal recall --all "<query>"` | Search across all repos in the account |
-| `tribal recall --list` | Browse all memories (no query, no cost) |
-| `tribal remember "<text>"` | Store knowledge to project memory |
-| `tribal forget "<query>"` | Find and delete outdated memories |
-| `tribal forget --id <id> --yes` | Delete a specific memory by ID |
-| `tribal forget --all --yes` | Clear all memories |
-| `tribal status` | Show project status and memory stats |
+```bash
+tribal recall --json "<query>"        # Search project memory
+tribal recall --all --json "<query>"  # Search across all repos
+tribal recall --list                  # Browse all memories
+tribal remember "<what you learned>"  # Save to project memory
+```
 
-All commands support `--json` / `-j` for structured output.
-Pipe via stdin: `echo "insight" | tribal remember`"""
+Full commands: `tribal forget`, `tribal status` (run `tribal --help` for details).
+All commands support `--json` / `-j` for structured output."""
 
 # ── Provider-specific snippets ──────────────────────────────────────────────
 
 SNIPPET_CLAUDE_CODE = f"""\
 {MARKER_START}
-## TribalMind — Project Memory
+## TribalMind — Shared Project Memory
+
+**WORKFLOW: (1) `tribal recall` before investigating. \
+(2) `tribal remember` after learning.**
 
 This project uses [TribalMind](https://github.com/zachary-nguyen/TribalMind) \
-for shared knowledge persistence across agents and team members.
-
-### IMPORTANT: Dual-save rule
-
-**Whenever you save to your native auto-memory (`~/.claude/`), you MUST also \
-run `tribal remember` with the same insight in the same step — and vice versa.** \
-Both writes happen together, every time. TribalMind is the shared team memory \
-that all agents and team members can access.
+for persistent shared memory across agents and team members. You MUST follow \
+the recall/remember workflow below.
 
 {_RECALL_SECTION}
 
 {_REMEMBER_SECTION}
+
+**Note for Claude Code:** When saving to your native memory (`~/.claude/`), \
+also run `tribal remember` with the same insight. Both writes happen together.
 
 {_REFERENCE_SECTION}
 {MARKER_END}"""
 
 SNIPPET_DEFAULT = f"""\
 {MARKER_START}
-## TribalMind — Project Memory
+## TribalMind — Shared Project Memory
 
-This project uses [TribalMind](https://github.com/zachary-nguyen/TribalMind) \
-for shared knowledge persistence across agents and team members.
+**WORKFLOW: (1) `tribal recall` before investigating. \
+(2) `tribal remember` after learning.**
 
-**You have no built-in persistent memory. TribalMind IS your memory.** Use it \
+You have no built-in persistent memory. TribalMind IS your memory — use it \
 to persist and retrieve knowledge across sessions.
 
 {_RECALL_SECTION}
