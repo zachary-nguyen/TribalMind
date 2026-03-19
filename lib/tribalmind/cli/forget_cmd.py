@@ -9,6 +9,8 @@ import sys
 import typer
 from rich.console import Console
 
+from tribalmind.providers import get_provider
+
 console = Console()
 
 
@@ -43,12 +45,6 @@ def forget(
         tribal forget --all --yes               # clear everything
         echo "outdated webpack tip" | tribal forget --yes
     """
-    from tribalmind.backboard.client import BackboardError, create_client
-    from tribalmind.backboard.memory import (
-        clear_memories,
-        delete_memory,
-        search_memories,
-    )
     from tribalmind.config.settings import get_settings
 
     settings = get_settings()
@@ -62,8 +58,9 @@ def forget(
         # Mode 1: Delete by ID
         if memory_id:
             async def _delete_by_id() -> None:
-                async with create_client() as client:
-                    await delete_memory(client, assistant_id, memory_id)
+                provider = get_provider()
+                async with provider:
+                    await provider.delete(memory_id)
 
             asyncio.run(_delete_by_id())
 
@@ -90,8 +87,9 @@ def forget(
                     raise typer.Abort()
 
             async def _clear() -> int:
-                async with create_client() as client:
-                    return await clear_memories(client, assistant_id)
+                provider = get_provider()
+                async with provider:
+                    return await provider.clear()
 
             deleted = asyncio.run(_clear())
 
@@ -125,8 +123,9 @@ def forget(
             raise typer.Exit(1)
 
         async def _search_and_delete() -> list[str]:
-            async with create_client() as client:
-                results = await search_memories(client, assistant_id, query_text, limit=10)
+            provider = get_provider()
+            async with provider:
+                results = await provider.search(query_text, limit=10)
                 if not results:
                     return []
 
@@ -142,7 +141,7 @@ def forget(
                 deleted_ids = []
                 for r in results:
                     if r.memory_id:
-                        await delete_memory(client, assistant_id, r.memory_id)
+                        await provider.delete(r.memory_id)
                         deleted_ids.append(r.memory_id)
                 return deleted_ids
 
@@ -164,6 +163,11 @@ def forget(
         else:
             console.print("[dim]No matching memories found.[/dim]")
 
-    except BackboardError as e:
-        console.print(f"[red]API error {e.status_code}:[/red] {e.detail}")
-        raise typer.Exit(1)
+    except Exception as e:
+        # Handle provider-specific errors
+        from tribalmind.backboard.client import BackboardError
+
+        if isinstance(e, BackboardError):
+            console.print(f"[red]API error {e.status_code}:[/red] {e.detail}")
+            raise typer.Exit(1)
+        raise

@@ -112,9 +112,17 @@ class TribalSettings(BaseSettings):
         extra="ignore",
     )
 
+    # Memory provider (backboard, mem0, etc.)
+    provider: str = "backboard"
+
     # Backboard
     backboard_base_url: str = "https://app.backboard.io/api"
     backboard_api_key: str = ""
+
+    # Mem0 (optional — only needed when provider=mem0)
+    mem0_api_key: str = ""
+    mem0_org_id: str = ""
+    mem0_project_id: str = ""
 
     # Project
     project_root: Path = Field(default_factory=Path.cwd)

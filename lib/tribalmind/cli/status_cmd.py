@@ -15,11 +15,11 @@ console = Console()
 
 async def _get_memory_count(assistant_id: str) -> int:
     """Get the number of memories stored for an assistant."""
-    from tribalmind.backboard.client import create_client
-    from tribalmind.backboard.memory import list_memories
+    from tribalmind.providers import get_provider
 
-    async with create_client() as client:
-        memories = await list_memories(client, assistant_id)
+    provider = get_provider()
+    async with provider:
+        memories = await provider.list_all()
         return len(memories)
 
 
@@ -36,7 +36,6 @@ def status(
         tribal status
         tribal status --json
     """
-    from tribalmind.backboard.client import BackboardError
     from tribalmind.config.settings import get_settings
 
     settings = get_settings()
@@ -47,11 +46,12 @@ def status(
     if configured:
         try:
             memory_count = asyncio.run(_get_memory_count(assistant_id))
-        except BackboardError:
+        except Exception:
             memory_count = -1  # indicate error
 
     info = {
         "configured": configured,
+        "provider": settings.provider,
         "project_root": str(settings.project_root),
         "assistant_id": assistant_id or "",
         "memory_count": memory_count,
@@ -69,6 +69,8 @@ def status(
         return
 
     lines = Text()
+    lines.append("Provider:   ", style="dim")
+    lines.append(f"{settings.provider}\n", style="#a78bfa")
     lines.append("Project:    ", style="dim")
     lines.append(str(settings.project_root) + "\n")
     lines.append("Assistant:  ", style="dim")

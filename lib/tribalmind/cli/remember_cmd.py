@@ -94,9 +94,13 @@ def _parse_llm_response(content: str) -> dict | None:
 
 
 async def _parse_with_llm(text: str) -> dict | None:
-    """Send text to the LLM for structured parsing."""
-    from tribalmind.backboard.client import create_client
-    from tribalmind.backboard.threads import create_thread, delete_thread, send_message
+    """Send text to the LLM for structured parsing.
+
+    Uses Backboard's thread/message API for the LLM call. If no Backboard API
+    key is configured (e.g. when using Mem0 as the memory provider), returns
+    None so the caller can fall back to raw context storage.
+    """
+    from tribalmind.config.credentials import get_backboard_api_key
     from tribalmind.config.settings import get_settings
 
     settings = get_settings()
@@ -104,47 +108,59 @@ async def _parse_with_llm(text: str) -> dict | None:
     if not assistant_id:
         return None
 
+    # LLM parsing requires a valid Backboard API key — if the user is on a
+    # non-Backboard provider and hasn't configured one, skip gracefully.
+    if not get_backboard_api_key():
+        logger.debug("No Backboard API key configured; skipping LLM parsing")
+        return None
+
+    from tribalmind.backboard.client import create_client
+    from tribalmind.backboard.threads import create_thread, delete_thread, send_message
+
     prompt = _PARSE_PROMPT.format(text=text)
     thread_id = None
 
-    async with create_client() as client:
-        thread = await create_thread(client, assistant_id)
-        thread_id = thread.get("thread_id", "")
+    try:
+        async with create_client() as client:
+            thread = await create_thread(client, assistant_id)
+            thread_id = thread.get("thread_id", "")
 
-        response = await send_message(
-            client,
-            thread_id,
-            prompt,
-            llm_provider=settings.llm_provider,
-            model_name=settings.model_name,
-        )
+            response = await send_message(
+                client,
+                thread_id,
+                prompt,
+                llm_provider=settings.llm_provider,
+                model_name=settings.model_name,
+            )
 
-        # Extract content from response
-        logger.debug("LLM raw response: %s", response)
-        content = response.get("content", "")
-        if not content:
-            messages = response.get("messages", [])
-            if messages:
-                last = messages[-1] if isinstance(messages, list) else messages
-                content = last.get("content", "") if isinstance(last, dict) else str(last)
+            # Extract content from response
+            logger.debug("LLM raw response: %s", response)
+            content = response.get("content", "")
+            if not content:
+                messages = response.get("messages", [])
+                if messages:
+                    last = messages[-1] if isinstance(messages, list) else messages
+                    content = last.get("content", "") if isinstance(last, dict) else str(last)
 
-        logger.debug("Extracted content for parsing: %r", content)
-        result = _parse_llm_response(content)
+            logger.debug("Extracted content for parsing: %r", content)
+            result = _parse_llm_response(content)
 
-        if thread_id:
-            try:
-                await delete_thread(client, thread_id)
-            except Exception:
-                pass
+            if thread_id:
+                try:
+                    await delete_thread(client, thread_id)
+                except Exception:
+                    pass
 
-        return result
+            return result
+    except Exception:
+        logger.debug("Backboard LLM parsing failed", exc_info=True)
+        return None
 
 
 async def _store_memory(text: str) -> dict:
-    """Parse text with LLM and store as a new Backboard memory."""
-    from tribalmind.backboard.client import create_client
-    from tribalmind.backboard.memory import add_memory, encode_memory, enforce_memory_limit
+    """Parse text with LLM and store as a memory via the configured provider."""
     from tribalmind.config.settings import get_settings
+    from tribalmind.providers import get_provider
 
     settings = get_settings()
     assistant_id = settings.project_assistant_id
@@ -153,45 +169,54 @@ async def _store_memory(text: str) -> dict:
         console.print("Run [bold]tribal init[/bold] first to set up your project.")
         raise typer.Exit(1)
 
-    # Parse with LLM
-    parsed = await _parse_with_llm(text)
+    provider = get_provider()
 
-    if not parsed or not parsed.get("content"):
-        # Fallback: store raw text as a 'context' memory
-        logger.debug("LLM parsing failed or returned no content; using fallback")
-        console.print(
-            "[yellow]LLM parsing failed — storing as raw context.[/yellow]"
-        )
-        parsed = {
-            "category": "context",
-            "subject": "",
-            "content": text,
-        }
-    else:
-        # Validate the category returned by the LLM
-        cat = parsed.get("category", "").lower().strip()
-        if cat not in VALID_CATEGORIES:
-            logger.debug("LLM returned invalid category %r; defaulting to 'context'", cat)
-            parsed["category"] = "context"
+    if settings.provider == "backboard":
+        # Backboard: use LLM to parse free-text into structured fields,
+        # then encode as our JSON format before storing.
+        from tribalmind.backboard.memory import encode_memory
 
-    encoded = encode_memory(
-        parsed["category"],
-        subject=parsed.get("subject", ""),
-        content=parsed.get("content", ""),
-    )
+        parsed = await _parse_with_llm(text)
 
-    metadata = {
-        "category": parsed["category"],
-        "subject": parsed.get("subject", ""),
-    }
-
-    async with create_client() as client:
-        await add_memory(client, assistant_id, encoded, metadata=metadata)
-        # Prune oldest memories if over the limit
-        if settings.max_memories_per_assistant > 0:
-            await enforce_memory_limit(
-                client, assistant_id, settings.max_memories_per_assistant
+        if not parsed or not parsed.get("content"):
+            logger.debug("LLM parsing failed or returned no content; using fallback")
+            console.print(
+                "[yellow]LLM parsing failed — storing as raw context.[/yellow]"
             )
+            parsed = {
+                "category": "context",
+                "subject": "",
+                "content": text,
+            }
+        else:
+            cat = parsed.get("category", "").lower().strip()
+            if cat not in VALID_CATEGORIES:
+                logger.debug("LLM returned invalid category %r; defaulting to 'context'", cat)
+                parsed["category"] = "context"
+
+        encoded = encode_memory(
+            parsed["category"],
+            subject=parsed.get("subject", ""),
+            content=parsed.get("content", ""),
+        )
+        metadata = {
+            "category": parsed["category"],
+            "subject": parsed.get("subject", ""),
+        }
+
+        async with provider:
+            await provider.add(encoded, metadata=metadata)
+            if settings.max_memories_per_assistant > 0:
+                await provider.enforce_limit(settings.max_memories_per_assistant)
+    else:
+        # Non-Backboard providers (e.g. Mem0): pass raw text directly.
+        # These providers have their own extraction/categorization pipelines.
+        parsed = {"category": "context", "subject": "", "content": text}
+
+        async with provider:
+            await provider.add(text)
+            if settings.max_memories_per_assistant > 0:
+                await provider.enforce_limit(settings.max_memories_per_assistant)
 
     return parsed
 
